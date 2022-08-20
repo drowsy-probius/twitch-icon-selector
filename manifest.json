@@ -1,0 +1,40 @@
+{
+  "name": "Twitch DCCON Selector",
+  "description": "Twitch DCCON Selector for some streamers",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "./background/index.js",
+    "type": "module"
+  },
+  "minimum_chrome_version": "92",
+
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms"
+  ],
+  "action": {
+    "default_title": "DCCON Selector",
+    "default_popup": "./popup/index.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.twitch.tv/*",
+        "*://twitch.tv/*"
+      ],
+      "js": [
+        "./inject/index.js"
+      ],
+      "css": [
+        "./inject/style.css"
+      ]
+    }
+  ],
+  "host_permissions": [
+    "*://*.funzinnu.com/stream/*"
+  ]
+
+}
