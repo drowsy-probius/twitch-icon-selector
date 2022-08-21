@@ -75,6 +75,7 @@ img.dccon-item:hover
   animation: enlarge .2s forwards;
 }
 
+
 div.dcccon-dialog
 {
   position: absolute;
@@ -90,9 +91,13 @@ div.dcccon-dialog-popup
   z-index: 200;
   background-color: gray;
   color: white;
+}
 
+.disappear
+{
   animation: disappear 1s forwards cubic-bezier(1.0, 0.9, 0.6, 0);
 }
+
 
 
 .hide
@@ -105,6 +110,10 @@ div.dcccon-dialog-popup
   animation: appear .3s forwards;
 }
 
+.hidden 
+{
+  display: none;
+}
 
 #twilight-sticky-footer-root
 {
