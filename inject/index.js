@@ -407,6 +407,7 @@ const replaceChatData = (chatDiv) => {
         parent.appendChild(document.createElement("br"));
         parent.appendChild(img);
         parent.appendChild(document.createElement("br"));
+        chatScrollByOne();
         return;
       }
     }
