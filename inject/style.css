@@ -76,23 +76,6 @@ img.dccon-item:hover
 }
 
 
-div.dcccon-dialog
-{
-  position: absolute;
-  display: block;
-  height: fit-content;
-  width: fit-content;
-}
-
-div.dcccon-dialog-popup
-{
-  display: none;
-  position: absolute;
-  z-index: 200;
-  background-color: gray;
-  color: white;
-}
-
 .disappear
 {
   animation: disappear 1s forwards cubic-bezier(1.0, 0.9, 0.6, 0);
@@ -164,7 +147,7 @@ div.dcccon-dialog-popup
     height: 40px;
   }
   to {
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
   }
 }

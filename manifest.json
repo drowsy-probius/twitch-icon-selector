@@ -9,6 +9,13 @@
   },
   "minimum_chrome_version": "92",
 
+  "icons": {
+    "16": "./public/16.icon.png",
+    "32": "./public/32.icon.png",
+    "48": "./public/48.icon.png",
+    "128": "./public/128.icon.png"
+  },
+
   "permissions": [
     "storage",
     "tabs",
@@ -18,7 +25,6 @@
     "default_title": "DCCON Selector",
     "default_popup": "./popup/index.html"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -26,15 +32,13 @@
         "*://twitch.tv/*"
       ],
       "js": [
+        "./thirdparty/popper.2.11.6.min.js",
+        "./thirdparty/tippy-bundle.umd.6.3.7.min.js",
         "./inject/index.js"
       ],
       "css": [
         "./inject/style.css"
       ]
     }
-  ],
-  "host_permissions": [
-    "*://*.funzinnu.com/stream/*"
   ]
-
 }

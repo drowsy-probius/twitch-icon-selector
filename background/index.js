@@ -29,13 +29,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
               + ' name: '          + alarm.name
               + ' scheduledTime: ' + alarm.scheduledTime);
 
-  chrome.storage.local.get(["streamers"], async result => {
+  chrome.storage.local.get(async result => {
     if("streamers" in result)
     {
       const streamers = result.streamers;
       for(const streamer of streamers)
       {
-        chrome.storage.local.get([streamer], async result => {
+        chrome.storage.local.get(async result => {
           if(!(streamer in result)) return;
           const data = result[streamer];
           if(!data.length && !isOutdated(data["timestamp"]))
@@ -45,10 +45,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
           }
 
           const newData = await getLatestData(streamer);
-          const saveData = {};
-          saveData[streamer] = formLocalStorageData(newData);
-          chrome.storage.local.set(saveData, () => {
-            console.log(`refresh ${streamer}`);
+          const localData = await chrome.storage.local.get();
+          localData[streamer] = formLocalStorageData(newData);
+          chrome.storage.local.set(localData, () => {
+            console.log(`Refresh ${streamer} done!`);
           });
         });
       }
@@ -56,10 +56,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   })
 });
 
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  console.log(sender.tab ?
+  console.log('runtime.onMessage -- ' + 
+    ("tab" in sender ?
     "from a content script:" + sender.tab.url :
-    "from the extension");
+    "from the extension"));
 
   if (request.command === "refresh")
   {
@@ -67,33 +69,21 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     {
       const streamer = request.streamer;
       const data = await getLatestData(streamer);
-      const saveData = {};
-      saveData[streamer] = formLocalStorageData(data);
-      chrome.storage.local.set(saveData, () => {
-        console.log(`refresh ${streamer}`);
+      const localData = await chrome.storage.local.get();
+      localData[streamer] = formLocalStorageData(data);
+      chrome.storage.local.set(localData, () => {
+        console.log(`Refresh ${streamer} done!`);
       });
-      sendResponse({result: true});
+      return sendResponse({result: true});
     }
     catch(e)
     {
       console.error(e);
-      sendResponse({result: false});
+      return sendResponse({result: false});
     }
   }
-  else if(request.command === "get")
-  {
-    try
-    {
-      const streamer = request.streamer;
-      const data = (await chrome.storage.local.get(streamer))[streamer];
-      sendResponse({result: data});
-    }
-    catch(e)
-    {
-      console.error(e);
-      sendResponse({result: false});
-    }
-  }
+
+  return sendResponse(true);
 });
 
 onStartup();

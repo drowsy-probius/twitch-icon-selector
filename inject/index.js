@@ -1,13 +1,6 @@
-const URLS = {
-  "funzinnu": "https://www.funzinnu.com/stream/dccon.js",
-  /**
-   * funzinnu
-   * 
-   * dcConsData = [
-   *  {name, uri, keywords: [], tags: []},
-   * ]
-   */
-}
+const WHITELIST_STREAMERS = [
+  "funzinnu"
+];
 
 /***************************************************** */
 const chatObserverOptions = {
@@ -22,15 +15,27 @@ const titleObserverOptions = {
   subtree: false,
 }
 
+let isWhitelist = false;
 let isVod, isPopout;
+let watchingStreamer;
+let chromeLocalData;
 let dccons;
-let runner;
-let rightColumn;
+const preRenderedDccons = {
+  "full": {},
+  "small": {},
+  "tippy": {
+    "full": {},
+    "small": {},
+  }
+};
 let inputArea, inputAreaParent, inputAreaContent;
 let chatArea, chatObserver;
+let chatSendButton;
+let currentChatText;
 let iconArea;
-let dcconSelectorRoot, dcconSelectorWrapper, dcconListContainer, dcconDialog;
+let dcconSelectorRoot, dcconSelectorWrapper, dcconListContainer;
 let dcconSelectorRootIcon, isSelectorOpen;
+let showSelector = true;
 let titleArea, titleObserver;
 
 /***************************************************** */
@@ -43,6 +48,10 @@ const logger = (level=1, ...args) => {
   else if(level === 2)
   {
     console.debug("[DCCON Selector] ", ...args);
+  }
+  else if(level === 3)
+  {
+    console.error("[DCCON Selector] ", ...args);
   }
 }
 
@@ -64,12 +73,6 @@ const getStreamerFromURL = () => {
   return streamer;
 }
 
-const getRightColumn = () => {
-  return isPopout 
-  ? document.querySelector('.chat-room')
-  : document.querySelector('.right-column');
-}
-
 const getChatInputArea = () => {
   return document.querySelector('[data-a-target="chat-input"]');
 }
@@ -88,17 +91,119 @@ const getChatArea = () => {
   : document.querySelector(".chat-scrollable-area__message-container");
 }
 
+const getChatSendButton = () => {
+  return document.querySelector('[data-a-target="chat-send-button"]');
+}
+
 const getRelativePosition = (target, mouseEvent) => {
   const {x, y} = target.getBoundingClientRect();
   const {clientX, clientY} = mouseEvent;
-
-  logger(2, {x: x, y: y}, {x: clientX, y: clientY}, {x: clientX-x , y: clientY-y});
 
   return {
     x: clientX - x,
     y: clientY - y,
   }
 }
+
+const chatScrollByOne = () => {
+  return document.querySelector("div[data-a-target='chat-scroller'] .simplebar-scroll-content")?.scrollBy(0, 100);
+}
+
+/**************************************** */
+
+const findExactlyMatch = (keyword) => {
+  /**
+   * ~로 시작하지 않음.
+   */
+  for(const dccon of dccons)
+  {
+    if(dccon.keywords.includes(keyword))
+    {
+      return dccon;
+    }
+  }
+  return false;
+}
+
+const makeStatusFromInput = async (input) => {
+  if(typeof(input) !== "string") return;
+  const icons = input.trimStart().split(" ").filter(t => t.startsWith("~")).filter(t => findExactlyMatch(t.slice(1)) !== false);
+  if(icons.length === 0) return;
+
+  const localData = await chrome.storage.local.get();
+  const dcconStatus = localData.dcconStatus || {};
+
+  Promise.all(icons.map(icon => {
+    return new Promise((resolve) => {
+      resolve({
+        "key": icon,
+        "value": dcconStatus[icon] ? dcconStatus[icon] + 1 : 1
+      });
+    })
+  }))
+  .then(data => {
+    const merged = {};
+    for(const info of data) merged[info.key] = info.value;
+
+    const updateDcconStatus = {
+      ...dcconStatus,
+      ...merged,
+    }
+
+    const updateData = {
+      ...localData,
+      dcconStatus: updateDcconStatus
+    }
+    chrome.storage.local.set(updateData, () => {
+      logger(2, `update dcconStatus`, updateDcconStatus);
+    })
+  })
+  .catch(err => {
+    logger(3, err);
+  })
+}
+
+const makePreRenderedDccons = (dccons) => {
+  dccons.forEach(dccon => {
+    const fullImg = document.createElement("img");
+    const fullTippyInstance = tippy(fullImg, {
+      content: `클릭해서 복사 ~${dccon.keywords[0]}`,
+      hideOnClick: false,
+      placement: "auto",
+    });
+    fullImg.classList.add("dccon");
+    fullImg.src = dccon.uri;
+    fullImg.alt = `~${dccon.keywords[0]}`;
+    fullImg.setAttribute("data-uri", dccon.uri);
+    fullImg.setAttribute("data-name", dccon.name);
+    fullImg.setAttribute("data-keywords", dccon.keywords);
+    fullImg.setAttribute("data-tags", dccon.tags);
+    fullImg.onclick = (event) => dcconClickHandlerInChat(event, fullTippyInstance);
+
+    const smallImg = document.createElement("img");
+    const smallTippyInstance = tippy(smallImg, {
+      content: `클릭해서 복사 ~${dccon.keywords[0]}`,
+      hideOnClick: false,
+      placement: "auto",
+    });
+    smallImg.classList.add("dccon-item");
+    smallImg.src = `${dccon.uri}?small`;
+    smallImg.alt = `~${dccon.keywords[0]}`;
+    smallImg.setAttribute("data-uri", dccon.uri);
+    smallImg.setAttribute("data-name", dccon.name);
+    smallImg.setAttribute("data-keywords", `${dccon.keywords}`);
+    smallImg.setAttribute("data-tags", dccon.tags);
+    smallImg.onclick = (event) => dcconClickHandler(event, smallTippyInstance);
+
+    preRenderedDccons.full[dccon.name] = fullImg;
+    preRenderedDccons.small[dccon.name] = smallImg;
+    preRenderedDccons.tippy.full[dccon.name] = fullTippyInstance;
+    preRenderedDccons.tippy.small[dccon.name] = smallTippyInstance;
+  })
+}
+
+/**************************************** */
+/**************************************** */
 
 const dcconFilter = (keyword) => {
   result = [];
@@ -140,40 +245,23 @@ const toggleSelector = (open) => {
   }
   else 
   {
-    dcconDialog = document.getElementById('dccon-dialog');
-    dcconDialog.innerHTML = ""
+    for(const keyname of Object.keys(preRenderedDccons.tippy.small))
+    {
+      preRenderedDccons.tippy.small[keyname].hide();
+    }
     dcconSelectorRoot.classList.remove("show");
     dcconSelectorRoot.classList.add("hide");
     inputAreaParent.removeChild(dcconSelectorRoot);
-
   }
 }
 
-const dcconMouseoverHandler = async (e) => {
-  dcconDialog = document.getElementById('dccon-dialog');
-  const popup = document.createElement('div');
-  const keyword = e.target.getAttribute("data-keywords").split(",")[0];
-  const pos = getRelativePosition(dcconDialog, e);
-  popup.classList.add("dcccon-dialog-popup");
-  popup.innerText = `${keyword}`;
-  popup.style.left = `${pos.x}px`;
-  popup.style.top = `${pos.y}px`;
-  popup.style.display = `block`;
-  dcconDialog.innerHTML = "";
-  dcconDialog.appendChild(popup);
-}
 
-const dcconMouseoutHandler = async (e) => {
-  dcconDialog = document.getElementById('dccon-dialog');
-  dcconDialog.innerHTML = "";
-}
-
-const dcconClickHandler = async (e) => {
+const dcconClickHandler = async (e, tippyInstance) => {
   e.preventDefault();
   const currentInput = getChatInputAreaContent(inputArea).innerText.trim().split(" ").pop();
   
   inputArea.focus();
-  let keywords = e.target.getAttribute("data-keywords").split(',');
+  let keywords = e.target.getAttribute("data-keywords").split(",").map(w => `~${w}`);
   let keyword = keywords[0];
   let isPrefix = false;
   for(let key of keywords)
@@ -191,15 +279,15 @@ const dcconClickHandler = async (e) => {
      * 중간 말고 처음부터 문자열이 일치하는 경우에는
      * 바로 적용
      */
-    keyword = keyword.substr(currentInput.length);
+    const slicedKeyword = keyword.slice(currentInput.length);
     const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${keyword} `);
+    dataTransfer.setData("text", `${slicedKeyword} `);
     const event = new ClipboardEvent("paste", {
       clipboardData: dataTransfer,
       bubbles: true,
     });
     inputArea.dispatchEvent(event);
-    
+    currentChatText = currentChatText + slicedKeyword;
     toggleSelector(false);
   }
   else 
@@ -208,25 +296,16 @@ const dcconClickHandler = async (e) => {
      * 아니라면 그냥 클립보드에 복사
      */
     await navigator.clipboard.writeText(keyword);
-
-    dcconDialog = document.getElementById('dccon-dialog');
-    const pos = getRelativePosition(dcconDialog, e);
-    const popup = document.createElement('div');
-    popup.classList.add("dcccon-dialog-popup", "disappear");
-    popup.innerText = `${keyword} 복사됨!`;
-    popup.style.left = `${pos.x}px`;
-    popup.style.top = `${pos.y}px`;
-    popup.style.display = `block`;
-    dcconDialog.innerHTML = "";
-    dcconDialog.appendChild(popup);
+    toggleSelector(false);
   }
 }
 
-const dcconClickHandlerInChat = async (e) => {
+const dcconClickHandlerInChat = async (e, tippyInstance) => {
   e.preventDefault();
-  const keyword = `~${e.target.getAttribute("data-keywords").split(',')[0]}`;
+  const keyword = e.target.alt;
 
-  if(inputArea)
+  inputArea.focus();
+  if(inputArea && inputArea.innerText.trimStart().length === 0)
   {
     const dataTransfer = new DataTransfer();
     dataTransfer.setData("text", `${keyword} `);
@@ -235,102 +314,99 @@ const dcconClickHandlerInChat = async (e) => {
       bubbles: true,
     });
     inputArea.dispatchEvent(event);
+    currentChatText = keyword;
+    tippyInstance.setContent(`채팅창에 복사됨`);
   }
   else 
   {
     await navigator.clipboard.writeText(keyword);
-
-    dcconDialog = document.getElementById('dccon-dialog');
-    const popup = document.createElement('div');
-    const pos = getRelativePosition(dcconDialog, e);
-    popup.classList.add("dcccon-dialog-popup", "disappear");
-    popup.innerText = `${keyword} 복사됨!`;
-    popup.style.left = `${pos.x}px`;
-    popup.style.top = `${pos.y}px`;
-    popup.style.display = `block`;
-    dcconDialog.innerHTML = "";
-    dcconDialog.appendChild(popup);
+    tippyInstance.setContent(`클립보드에 복사됨`);
   }
+  setTimeout(() => {
+    tippyInstance.setContent(`클릭해서 복사 ${keyword}`);
+  }, 1500);
 }
 
 const chatInputHandler = (e) => {
   if(!inputArea || !dcconSelectorRoot) return;
-  const text = inputArea.innerText.trimLeft();
+
+  if(e.key === "Escape")
+  {
+    try
+    {
+      showSelector = false;
+      toggleSelector(false);
+    }
+    catch(e)
+    {
+      logger(3, e);
+    }
+    finally
+    {
+      return;
+    }
+  }
+  if(e.key === "Enter")
+  {
+    try
+    {
+      makeStatusFromInput(currentChatText);
+      currentChatText = "";
+      // showSelector = true;
+      toggleSelector(false);
+    }
+    catch(e)
+    {
+      logger(3, e);
+    }
+    finally
+    {
+      return;
+    }
+  }
+
+  if(e.key === "~")
+  {
+    showSelector = true;
+  }
+  if(!showSelector) return;
+
+  const text = inputArea.innerText.trimStart();
+  currentChatText = text;
   const keyword = text.split(" ").pop();
   if(text.length === 0 || keyword.length === 0 || !keyword.startsWith("~"))
   {
     toggleSelector(false);
     return;
   }
-  toggleSelector(true);
 
+  toggleSelector(true);
   dcconListContainer.innerHTML = "";
-  const dcconList = dcconFilter(keyword.substr(1));
+  const dcconList = dcconFilter(keyword.slice(1));
   for(const dccon of dcconList)
   {
-    const itemIcon = document.createElement("img");
-    itemIcon.classList.add("dccon-item");
-    itemIcon.src = dccon.uri;
-
-    const keywords = dccon.keywords.map(k => `~${k}`); 
-
-    itemIcon.setAttribute("data-uri", dccon.uri);
-    itemIcon.setAttribute("data-name", dccon.name);
-    itemIcon.setAttribute("data-keywords", `${keywords}`);
-    itemIcon.setAttribute("data-tags", dccon.tags);
-    // itemIcon.title = keywords.join(" ");
-    itemIcon.alt = keywords;
-    itemIcon.onclick = dcconClickHandler;
-    itemIcon.onmouseover = dcconMouseoverHandler;
-    itemIcon.onmouseout = dcconMouseoutHandler;
-
+    const itemIcon = preRenderedDccons.small[dccon.name];
+    // preRenderedDccons.tippy.small[dccon.name].enable();
     dcconListContainer.appendChild(itemIcon);
   }
-}
-
-const findExactlyMatch = (keyword) => {
-  for(const dccon of dccons)
-  {
-    if(dccon.keywords.includes(keyword))
-    {
-      return dccon;
-    }
-  }
-  return false;
 }
 
 const replaceChatData = (chatDiv) => {
   const parent = chatDiv.parentElement;
   const text = chatDiv.innerText;
 
-  const debugList = [];
-
   chatDiv.innerText = "";
   text.split(" ").forEach((token, index, arr) => {
     if(token.startsWith('~'))
     {
-      const keyword = token.substr(1);
-      const dccon = findExactlyMatch(keyword)
+      const keyword = token.slice(1);
+      const dccon = findExactlyMatch(keyword);
       if(dccon)
       {
-        const img = document.createElement("img");
-        img.classList.add("dccon");
-        img.src = dccon.uri;
-        // img.title = `~${keyword}`;
-        img.alt = `~${keyword}`;
-        img.setAttribute("data-uri", dccon.uri);
-        img.setAttribute("data-name", dccon.name);
-        img.setAttribute("data-keywords", dccon.keywords);
-        img.setAttribute("data-tags", dccon.tags);
-        img.onclick = dcconClickHandlerInChat;
-        img.onmouseover = dcconMouseoverHandler;
-        img.onmouseout = dcconMouseoutHandler;
+        const img = preRenderedDccons.full[dccon.name];
         parent.appendChild(document.createElement("br"));
         parent.appendChild(img);
         parent.appendChild(document.createElement("br"));
-
-        debugList.push(img);
-
         return;
       }
     }
@@ -344,11 +420,9 @@ const replaceChatData = (chatDiv) => {
       txt.innerText += " ";
     }
     parent.appendChild(txt);
-
-    debugList.push(txt);
   });
 
-  logger(2, text, '=>', debugList.map(v => v.alt || v.innerText));
+  // logger(2, text, '=>', debugList.map(v => v.alt || v.innerText));
 }
 
 const replaceChatAll = () => {
@@ -370,13 +444,11 @@ const chatObserverHandler = (mutationList, observer) => {
   }
 }
 
-
 const titleObserverHandler = (mutationList, observer) => {
-  logger(2 , `title changed! reloading...`);
+  logger(1, `title changed! reloading...`);
   inputAreaParent = undefined;
   dcconSelectorRoot = undefined;
   dcconListContainer = undefined;
-  dcconDialog = undefined;
   dcconSelectorRootIcon = undefined;
   inputArea = undefined;
   inputAreaContent = undefined;
@@ -388,23 +460,19 @@ const titleObserverHandler = (mutationList, observer) => {
   isVod = location.href.indexOf("videos") !== -1;
   isPopout = location.href.indexOf("popout") !== -1;
 
-  logger(2 , "vod?", isVod);
-
   elementInitializer();
-  logger(2 , `reloaded!`);
 }
-
 
 const inputAreaExists = () => {
   if(!inputArea || !dccons) return;
   inputAreaParent = inputArea.parentElement;
-  inputArea.onkeyup  = chatInputHandler;
+  inputArea.onkeyup = chatInputHandler;
+  inputArea.onpaste = chatInputHandler;
   
   /**
    * root
    *  - wrapper
    *    - list
-   *  - dialog
    * 
    */
 
@@ -428,62 +496,103 @@ const inputAreaExists = () => {
 
 
 const elementInitializer = () => {
+  function metaLoader(){
+    isVod = location.href.indexOf("videos") !== -1;
+    isPopout = location.href.indexOf("popout") !== -1;
+    if(isPopout)
+    {
+      /**
+       * https://www.twitch.tv/popout/streamer/chat
+       */
+      watchingStreamer = location.href.split("/").slice(-2)[0];
+    }
+    else if(isVod)
+    {
+      const profileElement = document.querySelector('[data-a-target="watch-mode-to-home"]');
+      watchingStreamer = profileElement.href.split("/").pop().split("?")[0];
+    }
+    else 
+    {
+      /**
+       * https://www.twitch.tv/streamer?asdf
+       */
+      watchingStreamer = location.href.split("/").pop().split("?")[0];
+    }
+    watchingStreamer = watchingStreamer.toLowerCase();
+    isWhitelist = WHITELIST_STREAMERS.includes(watchingStreamer);
+  }
+
   function finder(){
     if(isVod === false)
     {
-      if(!inputArea)
+      logger(1, "searching chat input area...");
+      inputArea = getChatInputArea();
+      if(inputArea)
       {
-        logger(2 , "searching chat input area...");
-        inputArea = getChatInputArea();
-        if(inputArea)
-        {
-          inputAreaExists();
-        }
+        inputAreaExists();
       }
-      if(!iconArea)
+      
+      logger(1, "searching chat icon area...");
+      iconArea = getIconArea();
+      if(iconArea)
       {
-        logger(2 , "searching chat icon area...");
-        iconArea = getIconArea();
-        if(iconArea)
-        {
 
+      }
+
+      logger(1, "searching chat send button...");
+      chatSendButton = getChatSendButton();
+      if(chatSendButton)
+      {
+        chatSendButton.onclick = (e) => {
+          makeStatusFromInput(currentChatText);
+          currentChatText = "";
+          showSelector = true;
+          toggleSelector(false);
         }
       }
     }
 
-    if(!rightColumn)
-    {
-      logger(2 , "searching right column...");
-      rightColumn = getRightColumn();
-      if(rightColumn)
-      {
-        dcconDialog = document.createElement('div');
-        dcconDialog.id = "dccon-dialog";
-        rightColumn.appendChild(dcconDialog);
-      }
-    }
-
-    if(!chatArea)
-    {
-      logger(2 , "searching chat area...");
-      chatArea = getChatArea();
-      if(chatArea)
-      { 
-        replaceChatAll();
-        chatObserver = new MutationObserver(chatObserverHandler);
-        chatObserver.observe(chatArea, chatObserverOptions);
-      }
+    logger(1, "searching chat area...");
+    chatArea = getChatArea();
+    if(chatArea)
+    { 
+      replaceChatAll();
+      chatObserver = new MutationObserver(chatObserverHandler);
+      chatObserver.observe(chatArea, chatObserverOptions);
     }
   }
 
-  finder();
+  metaLoader();
+  if(isWhitelist) finder();
   const job = setInterval(() => {
-    if((isVod === false && (!inputArea || !iconArea)) || !chatArea || !rightColumn)
+    metaLoader();
+    if(!isWhitelist)
+    {
+      logger(1, `${watchingStreamer} is not in our whitelist`);
+      clearInterval(job);
+      return;
+    }
+
+    if(!dccons) dccons = chromeLocalData[watchingStreamer].data;
+    if(!dccons || dccons.length === 0)
+    {
+      chrome.runtime.sendMessage({command: "refresh", streamer: streamer}, async (response) => {
+        console.log(response.result);
+        chromeLocalData = await chrome.storage.local.get();
+        dccons = chromeLocalData[watchingStreamer].data;
+      });
+    }
+    makePreRenderedDccons(dccons);
+
+    logger(1, `loaded ${watchingStreamer}'s dccon! length: ${dccons.length}`);
+
+    if((isVod === false && (!inputArea || !iconArea || !chatSendButton)) || !chatArea)
     {
       finder();
     }
     else 
     {
+      logger(1, `loaded!`);
       clearInterval(job);
     }
   }, 100);
@@ -491,24 +600,8 @@ const elementInitializer = () => {
 
 
 const run = async () => {
-  logger(2 , "loaded!");
-  // const streamer = getStreamerFromURL();
-  const streamer = "funzinnu";
-  if(!(streamer in URLS))
-  {
-    logger(2 , `${streamer} is not in whitelist. exit...`);
-    return;
-  }
-
-  dccons = (await chrome.storage.local.get(streamer))[streamer].data;
-  if(!dccons || dccons.length === 0)
-  {
-    chrome.runtime.sendMessage({command: "refresh", streamer: streamer}, async (response) => {
-      console.log(response.result);
-      dccons = (await chrome.storage.local.get(streamer))[streamer].data;
-    });
-  }
-  logger(2 , `loaded dccon length: ${dccons.length}`);
+  logger(1, "start loading...");
+  chromeLocalData = (await chrome.storage.local.get());
 
   titleArea = document.getElementsByTagName('title')[0];
   titleObserver = new MutationObserver(titleObserverHandler);
@@ -518,4 +611,3 @@ const run = async () => {
 }
 
 window.onload = run;
-

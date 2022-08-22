@@ -1,6 +1,6 @@
 export const APP_VERSION = "1.0.0";
 export const URLS = {
-  "funzinnu": "https://www.funzinnu.com/stream/dccon.js"
+  "funzinnu": "https://twitch-icons.probius.dev/list/funzinnu"
 }
 
 export const DAY_IN_MIN = 24 * 60 * 60;
@@ -9,7 +9,6 @@ export const DAY_IN_MISEC = DAY_IN_MIN * 1000;
 
 const parserFunzinnu = async (response) => {
   let text = await response.text();
-  text = text.replace("dcConsData = ", `{"dcConsData" : `).replace(/;$/, "}");
   const json = JSON.parse(text);
   return json["dcConsData"];
 }
