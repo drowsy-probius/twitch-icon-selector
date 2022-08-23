@@ -17,20 +17,21 @@ img.dccon[data-name^="관짝"]
 
 div.dccon-selector-root
 {
-
+  padding: 0 5px;
+  position: absolute;
+  width: 100%;
+  max-height: 200px !important;
+  visibility: hidden;
 }
 
 div.dccon-selector-wrapper
 {
-  position: absolute;
-  top: -17em;
-  /* left: 10%; */
   background: lightgray;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
   width: 100%;
-  max-height: 200px;
+  max-height: inherit;
   z-index: 100;
   overflow: auto;
 }
@@ -75,12 +76,11 @@ img.dccon-item:hover
   animation: enlarge .2s forwards;
 }
 
-
-.disappear
+.enlarge
 {
-  animation: disappear 1s forwards cubic-bezier(1.0, 0.9, 0.6, 0);
+  width: 45px !important;
+  height: 45px !important;
 }
-
 
 
 .hide
@@ -92,17 +92,6 @@ img.dccon-item:hover
 {
   animation: appear .3s forwards;
 }
-
-.hidden 
-{
-  display: none;
-}
-
-#twilight-sticky-footer-root
-{
-  display: none;
-}
-
 
 @keyframes rotation {
   from {
@@ -138,6 +127,7 @@ img.dccon-item:hover
 @keyframes appear {
   100% {
     opacity: 100%;
+    visibility: visible;
   }
 }
 
