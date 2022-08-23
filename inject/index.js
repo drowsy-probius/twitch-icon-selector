@@ -12,7 +12,7 @@ const chatObserverOptions = {
 const refreshObserverOptions = {
   childList: true,
   attributes: false,
-  subtree: true,
+  subtree: false,
 }
 
 /**
@@ -345,13 +345,13 @@ const findExactlyMatch = (keyword) => {
  */
 const makeStatusFromInput = async (input) => {
   currentChatText = "";
-  logger.debug("Chat input", input);
+  // logger.debug("Chat input", input);
   if(typeof(input) !== "string") return;
   const icons = input.trimStart().split(" ").filter(t => t.startsWith("~")).filter(t => findExactlyMatch(t.slice(1)) !== false);
   if(icons.length === 0) return;
 
-  let chromeLocalData = await chrome.storage.local.get();
-  let dcconStatus = chromeLocalData.dcconStatus || {};
+  if(!chromeLocalData || chromeLocalData.length === 0) chromeLocalData = await chrome.storage.local.get();
+  dcconStatus = chromeLocalData.dcconStatus[watchingStreamer] || {};
 
   Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
@@ -372,8 +372,9 @@ const makeStatusFromInput = async (input) => {
 
     const updateData = {
       ...chromeLocalData,
-      dcconStatus: dcconStatus
     }
+    updateData.dcconStatus[watchingStreamer] = dcconStatus;
+
     chrome.storage.local.set(updateData, () => {
       logger.debug(`update dcconStatus`, dcconStatus);
     })
@@ -593,7 +594,7 @@ const dcconClickHandler = async (e) => {
       isPrefix = true;
     }
   }
-  logger.debug(currentInput, currentInput.length, keyword, "prefix?", isPrefix);
+  logger.debug(currentInput, currentInput.length, "=>", keyword, "prefix?", isPrefix);
   if(isPrefix)
   {
     /**
@@ -1036,8 +1037,8 @@ const elementInitializer = () => {
     isWhitelist = WHITELIST_STREAMERS.includes(watchingStreamer);
 
     /** FOR DEV */
-    watchingStreamer = "funzinnu";
-    isWhitelist = true;
+    // watchingStreamer = "funzinnu";
+    // isWhitelist = true;
     /** FOR DEV */
   }
 
@@ -1054,14 +1055,14 @@ const elementInitializer = () => {
        */
       // logger.debug(response);
       chromeLocalData = await chrome.storage.local.get();
-      dccons = chromeLocalData[watchingStreamer].data;
-      dcconStatus = chromeLocalData.dcconStatus;
+      dccons = chromeLocalData.dcconMetadata[watchingStreamer].data;
+      dcconStatus = chromeLocalData.dcconStatus[watchingStreamer];
       makePreRenderedDccons(dccons);
       logger.log(`loaded ${watchingStreamer}'s dccon! length: ${dccons.length}`);
     }
     catch(err)
     {
-      logger.error(err);
+      logger.error(watchingStreamer, err);
     }
   }
 
@@ -1161,7 +1162,7 @@ const run = async () => {
 
   lastUrl = location.href;
   refreshObserver = new MutationObserver(refreshObserverHandler);
-  refreshObserver.observe(document, refreshObserverOptions);
+  refreshObserver.observe(document.getElementsByTagName("title")[0], refreshObserverOptions);
 
   elementInitializer();
 }

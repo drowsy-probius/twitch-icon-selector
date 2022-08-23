@@ -6,6 +6,10 @@ export const URLS = {
 export const DAY_IN_MIN = 24 * 60 * 60;
 export const DAY_IN_MISEC = DAY_IN_MIN * 1000;
 
+export const DEFAULT_LOCALSTORAGE = { 
+  dcconMetadata: {},
+  dcconStatus: {},
+}
 
 const parserFunzinnu = async (response) => {
   let text = await response.text();
