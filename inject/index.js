@@ -9,10 +9,10 @@ const chatObserverOptions = {
   subtree: false,
 }
 
-const titleObserverOptions = {
+const refreshObserverOptions = {
   childList: true,
   attributes: false,
-  subtree: false,
+  subtree: true,
 }
 
 /**
@@ -57,10 +57,6 @@ let dccons;
 const preRenderedDccons = {
   "full": {},
   "small": {},
-  "tippy": {
-    "full": {},
-    "small": {},
-  }
 };
 
 /**
@@ -128,41 +124,47 @@ let isSelectorOpen = false;
 let showSelector = true;
 
 /**
- * title 태그 요소
+ * 이전 페이지의 url 주소
  */
-let titleArea
+let lastUrl = "";
 /**
- * title 태그 옵저버
+ * 새 페이지인지 확인하는 옵저버
  */
-let titleObserver;
+let refreshObserver;
 
 /**
  * 디시콘 선택기에서 선택 커서
- * -1이면 비활성화 상태
+ * 무한하게 증가, 감소 가능
  */
 let dcconSelectorCursor = -1;
 
-/***************************************************** */
+/**
+ * 디시콘 선택기에서 위 커서를 사용하면
+ * 바로 붙여넣기 안되게 막는 함수
+ * 
+ * false면 클립보드에 복사만 함.
+ */
+let dcconSelectorCursorPaste = true;
 
 /**
- * level
- * 1: console.log
- * 2: console.debug
- * 3: console.error
+ * 사용자가 입력한 디시콘 통계
+ * 로컬에 저장됨.
  */
-const logger = (level=1, ...args) => {
-  if(level === 1)
-  {
-    console.log("[DCCON Selector] ", ...args);
-  }
-  else if(level === 2)
-  {
-    console.debug("[DCCON Selector] ", ...args);
-  }
-  else if(level === 3)
-  {
-    console.error("[DCCON Selector] ", ...args);
-  }
+let dcconStatus = {};
+
+/**
+ * tippy instance
+ */
+let fullTippyInstance, smallTippyInstance;
+
+/***************************************************** */
+
+const logger = {
+  debug: console.debug.bind(window.console, "[DCCON Selector][DEBUG] "),
+  info: console.info.bind(window.console, "[DCCON Selector][INFO] "),
+  log: console.log.bind(window.console, "[DCCON Selector][LOG] "),
+  error: console.error.bind(window.console, "[DCCON Selector][ERROR] "),
+  warn: console.warn.bind(window.console, "[DCCON Selector][WARN] "),
 }
 
 /***************************************************** */
@@ -190,6 +192,37 @@ const waitForElement = (selector) => {
       subtree: true
     });
   });
+}
+
+/**
+ * callback 함수 실행되게 만들어줌
+ * @returns 
+ */
+const makeCallback = (execute, callback) => {
+  return new Promise((resolve, reject) => {
+    try{ resolve(execute()); } catch(e) { reject(e) }
+  })
+  .then(_ => {
+    callback();
+  })
+}
+
+
+/**
+ * 인덱스를 안전하게 바꿔줌 
+ * 
+ * @param {number} length 
+ * @param {number} index 
+ */
+const indexNormalizer = (length, index) => {
+  if(typeof(length) !== "number" || typeof(index) !== "number")
+  {
+    logger.error("is not a number", length, index);
+    return 0;
+  }
+  while(index < 0) index += length;
+  while(index >= length) index -= length;
+  return index;
 }
 
 /***************************************************** */
@@ -288,6 +321,11 @@ const chatScrollByOne = () => {
  * @returns boolean | Object
  */
 const findExactlyMatch = (keyword) => {
+  /**
+   * 아직 디시콘이 로딩되지 않았을 때
+   */
+  if(!dccons) return false;
+
   for(const dccon of dccons)
   {
     if(dccon.keywords.includes(keyword))
@@ -306,12 +344,14 @@ const findExactlyMatch = (keyword) => {
  * @returns void
  */
 const makeStatusFromInput = async (input) => {
+  currentChatText = "";
+  logger.debug("Chat input", input);
   if(typeof(input) !== "string") return;
   const icons = input.trimStart().split(" ").filter(t => t.startsWith("~")).filter(t => findExactlyMatch(t.slice(1)) !== false);
   if(icons.length === 0) return;
 
-  const localData = await chrome.storage.local.get();
-  const dcconStatus = localData.dcconStatus || {};
+  let chromeLocalData = await chrome.storage.local.get();
+  let dcconStatus = chromeLocalData.dcconStatus || {};
 
   Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
@@ -325,21 +365,21 @@ const makeStatusFromInput = async (input) => {
     const merged = {};
     for(const info of data) merged[info.key] = info.value;
 
-    const updateDcconStatus = {
+    dcconStatus = {
       ...dcconStatus,
       ...merged,
     }
 
     const updateData = {
-      ...localData,
-      dcconStatus: updateDcconStatus
+      ...chromeLocalData,
+      dcconStatus: dcconStatus
     }
     chrome.storage.local.set(updateData, () => {
-      logger(2, `update dcconStatus`, updateDcconStatus);
+      logger.debug(`update dcconStatus`, dcconStatus);
     })
   })
   .catch(err => {
-    logger(3, err);
+    logger.error(err);
   })
 }
 
@@ -352,11 +392,6 @@ const makeStatusFromInput = async (input) => {
 const makePreRenderedDccons = (dccons) => {
   dccons.forEach(dccon => {
     const fullImg = document.createElement("img");
-    const fullTippyInstance = tippy(fullImg, {
-      content: `~${dccon.keywords[0]}`,
-      hideOnClick: false,
-      placement: "auto",
-    });
     fullImg.classList.add("dccon");
     fullImg.src = dccon.uri;
     fullImg.alt = `~${dccon.keywords[0]}`;
@@ -364,14 +399,14 @@ const makePreRenderedDccons = (dccons) => {
     fullImg.setAttribute("data-name", dccon.name);
     fullImg.setAttribute("data-keywords", dccon.keywords);
     fullImg.setAttribute("data-tags", dccon.tags);
-    fullImg.onclick = (event) => dcconClickHandlerInChat(event, fullTippyInstance);
+    fullImg.setAttribute("data-tippy-content", `~${dccon.keywords[0]}`);
+    /**
+     * 채팅 창에 렌더되는 큰 이미지는 cloneNode로 복사해서 사용한다.
+     * 그런데 cloneNode는 이벤트리스너를 복사할 수 없으니까
+     * 복사하는 부분에서 onclick 설정한다.
+     */
 
     const smallImg = document.createElement("img");
-    const smallTippyInstance = tippy(smallImg, {
-      content: `~${dccon.keywords[0]}`,
-      hideOnClick: true,
-      placement: "auto",
-    });
     smallImg.classList.add("dccon-item");
     smallImg.src = `${dccon.uri}?small`;
     smallImg.alt = `~${dccon.keywords[0]}`;
@@ -379,16 +414,41 @@ const makePreRenderedDccons = (dccons) => {
     smallImg.setAttribute("data-name", dccon.name);
     smallImg.setAttribute("data-keywords", `${dccon.keywords}`);
     smallImg.setAttribute("data-tags", dccon.tags);
-    smallImg.onclick = (event) => dcconClickHandler(event, smallTippyInstance);
+    smallImg.setAttribute("data-tippy-content", `~${dccon.keywords[0]}`);
+    smallImg.onclick = dcconClickHandler;
 
     preRenderedDccons.full[dccon.name] = fullImg;
     preRenderedDccons.small[dccon.name] = smallImg;
-    preRenderedDccons.tippy.full[dccon.name] = fullTippyInstance;
-    preRenderedDccons.tippy.small[dccon.name] = smallTippyInstance;
-  })
+  });
+  setTippyInstance();
 }
 
-/**************************************** */
+
+/**
+ * tippy instance를 삭제, 생성함
+ * @param {boolean} small 
+ * @param {boolean} destroyOnly 
+ */
+const setTippyInstance = (small, destroyOnly=false) => {
+  if(small === true) try { smallTippyInstance.unmount(); smallTippyInstance.destroy(); } catch(e) { }
+  if(small === false) try { fullTippyInstance.unmount(); fullTippyInstance.destroy(); } catch(e) { }
+  
+  if(destroyOnly === true) return;
+
+  if(small === true) smallTippyInstance = tippy(".dccon-item", {
+    hideOnClick: true,
+    placement: "top",
+    theme: "twitch",
+  });
+
+  if(small === false) fullTippyInstance = tippy(".dccon", {
+    hideOnClick: true,
+    placement: "top",
+    theme: "twitch",
+  });
+}
+
+
 /**************************************** */
 
 /**
@@ -398,15 +458,40 @@ const makePreRenderedDccons = (dccons) => {
  * @returns DcconData[]
  */
 const dcconFilter = (keyword) => {
-  if(keyword.length === 0)
-  {
-    return dccons;
-  }
-
-  result = [];
+  const result = [];
+  const dcconWithFrequency = [];
   for(const dccon of dccons)
   {
+    const keyword = `~${dccon.keywords[0]}`
+    if(keyword in dcconStatus)
+    {
+      dcconWithFrequency.push([dccon, dcconStatus[keyword]]);
+    }
+    else 
+    {
+      dcconWithFrequency.push([dccon, 0]);
+    }
+  }
+
+  dcconWithFrequency.sort((a, b) => {
+    return b[1] - a[1];
+  });
+
+  /**
+   * 검색 값이 없으면 그냥 리턴함.
+   */
+  if(keyword.length === 0)
+  {
+    return dcconWithFrequency.map(v => v[0]);
+  }
+
+  for(const dcconInfo of dcconWithFrequency)
+  {
+    const dccon = dcconInfo[0];
     let isInsert = false;
+    /**
+     * 키워드 검색
+     */
     for(const key of dccon.keywords)
     {
       if(key.indexOf(keyword) !== -1)
@@ -417,7 +502,9 @@ const dcconFilter = (keyword) => {
       }
     }
     if(isInsert) continue;
-
+    /**
+     * 태그 검색
+     */
     for(const tag of dccon.tags)
     {
       if(tag.indexOf(keyword) !== -1)
@@ -441,33 +528,56 @@ const toggleSelector = (open) => {
 
   if(open === true)
   {
-    const chatPos = inputArea.getBoundingClientRect();
-    const selectorPos = dcconSelectorWrapper.getBoundingClientRect();
-    dcconSelectorRoot.style.top = `${chatPos.top - DCCON_SELECTOR_HEIGHT - 60}px`;
+    makeCallback(() => {
+      const chatPos = inputArea.getBoundingClientRect();
+      // const selectorPos = dcconSelectorWrapper.getBoundingClientRect();
+      dcconSelectorRoot.style.bottom = `${chatPos.height + 60}px`;
 
-    inputAreaParent.appendChild(dcconSelectorRoot);
-    dcconSelectorRoot.classList.remove("hide");
-    dcconSelectorRoot.classList.add("show");
-    isSelectorOpen = true;
+      inputAreaParent.appendChild(dcconSelectorRoot);
+      dcconSelectorRoot.classList.remove("hide");
+      dcconSelectorRoot.classList.add("show");
+      isSelectorOpen = true;
+    }, () => {
+      setTippyInstance(true, false);
+    });
   }
   else 
   {
-    tippy.hideAll(0);
-    dcconSelectorRoot.classList.remove("show");
-    dcconSelectorRoot.classList.add("hide");
-    inputAreaParent.removeChild(dcconSelectorRoot);
-    isSelectorOpen = false;
+    makeCallback(() => {
+      tippy.hideAll(0);
+      dcconSelectorRoot.classList.remove("show");
+      dcconSelectorRoot.classList.add("hide");
+      inputAreaParent.removeChild(dcconSelectorRoot);
+      isSelectorOpen = false;
+    }, () => {
+      setTippyInstance(true, true);
+    })
   }
 
   if(inputArea) inputArea.focus();
 }
 
 /**
+ * 디시콘 선택기 창을 구성한다
+ * 키워드는 ~가 포함되지 않은 것
+ * 
+ * @param {string} keyword 
+ */
+const constructSelectorItems = (keyword) => {
+  dcconListContainer.innerHTML = "";
+  const dcconList = dcconFilter(keyword);
+  for(const dccon of dcconList)
+  {
+    const itemIcon = preRenderedDccons.small[dccon.name];
+    dcconListContainer.appendChild(itemIcon);
+  }
+}
+
+/**
  * 디시콘 선택기에서 디시콘을 선택했을 때 호출됨.
  * @param {MouseEvent} e 
- * @param {tippy} tippyInstance 
  */
-const dcconClickHandler = async (e, tippyInstance) => {
+const dcconClickHandler = async (e) => {
   e.preventDefault();
   const currentInput = getChatInputAreaContent(inputArea).innerText.trim().split(" ").pop();
   
@@ -483,7 +593,7 @@ const dcconClickHandler = async (e, tippyInstance) => {
       isPrefix = true;
     }
   }
-  logger(2 , currentInput, currentInput.length, keyword, "prefix?", isPrefix);
+  logger.debug(currentInput, currentInput.length, keyword, "prefix?", isPrefix);
   if(isPrefix)
   {
     /**
@@ -499,48 +609,34 @@ const dcconClickHandler = async (e, tippyInstance) => {
     });
     inputArea.dispatchEvent(event);
     currentChatText = currentChatText + slicedKeyword;
-    toggleSelector(false);
   }
-  else 
-  {
-    /**
-     * 아니라면 그냥 클립보드에 복사
-     */
-    await navigator.clipboard.writeText(keyword);
-    toggleSelector(false);
-  }
+  await navigator.clipboard.writeText(keyword);
+  toggleSelector(false);
 }
 
 /**
  * 채팅창에 올라온 디시콘을 선택했을 때 호출됨.
  * @param {MouseEvent} e 
- * @param {tippy} tippyInstance 
  */
-const dcconClickHandlerInChat = async (e, tippyInstance) => {
-  e.preventDefault();
+const dcconClickHandlerInChat = async (e) => {
   const keyword = e.target.alt;
 
-  if(!isVod) inputArea.focus();
-  if(inputArea && inputArea.innerText.trimStart().length === 0)
+  if(!isVod) 
   {
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${keyword} `);
-    const event = new ClipboardEvent("paste", {
-      clipboardData: dataTransfer,
-      bubbles: true,
+    makeCallback(() => {
+      inputArea.focus();
+    }, () => {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData("text", `${keyword} `);
+      const event = new ClipboardEvent("paste", {
+        clipboardData: dataTransfer,
+        bubbles: true,
+      });
+      inputArea.dispatchEvent(event);
+      currentChatText = keyword;
     });
-    inputArea.dispatchEvent(event);
-    currentChatText = keyword;
-    tippyInstance.setContent(`채팅창에 복사됨`);
   }
-  else 
-  {
-    await navigator.clipboard.writeText(keyword);
-    tippyInstance.setContent(`클립보드에 복사됨`);
-  }
-  setTimeout(() => {
-    tippyInstance.setContent(`${keyword}`);
-  }, 1500);
+  await navigator.clipboard.writeText(keyword);
 }
 
 /**
@@ -550,6 +646,8 @@ const dcconClickHandlerInChat = async (e, tippyInstance) => {
  */
 const chatInputHandler = (e) => {
   if(!inputArea || !dcconSelectorRoot) return;
+  const text = inputArea.innerText.trimStart();
+  currentChatText = text + "";
   if(e.key === "Escape")
   {
     try
@@ -559,21 +657,7 @@ const chatInputHandler = (e) => {
     }
     catch(e)
     {
-      logger(3, e);
-    }
-    return;
-  }
-  if(e.key === "Enter")
-  {
-    try
-    {
-      makeStatusFromInput(currentChatText);
-      currentChatText = "";
-      toggleSelector(false);
-    }
-    catch(e)
-    {
-      logger(3, e);
+      logger.error(e);
     }
     return;
   }
@@ -583,8 +667,6 @@ const chatInputHandler = (e) => {
   }
   if(!showSelector) return;
 
-  const text = inputArea.innerText.trimStart();
-  currentChatText = text;
   const keyword = text.split(" ").pop();
   if(text.length === 0 || keyword.length === 0 || !keyword.startsWith("~"))
   {
@@ -593,13 +675,7 @@ const chatInputHandler = (e) => {
   }
 
   toggleSelector(true);
-  dcconListContainer.innerHTML = "";
-  const dcconList = dcconFilter(keyword.slice(1));
-  for(const dccon of dcconList)
-  {
-    const itemIcon = preRenderedDccons.small[dccon.name];
-    dcconListContainer.appendChild(itemIcon);
-  }
+  constructSelectorItems(keyword.slice(1));
 }
 
 /**
@@ -608,9 +684,30 @@ const chatInputHandler = (e) => {
  * keydown 이벤트로 따로 분리함.
  * @param {KeyboardEvent} e 
  */
-const chatInputHandlerForArrow = (e) => {
+const chatInputHandlerForArrow = async (e) => {
+  const text = inputArea.innerText.trimStart();
+  currentChatText = text + "";
+  if(e.key === "Enter")
+  {
+    /**
+     * Enter키 리스너는 onkeydown 이벤트에 실행되어야
+     * 입력한 채팅 값을 사용할 수 있음.
+     */
+    try
+    {
+      makeStatusFromInput(currentChatText);
+      toggleSelector(false);
+    }
+    catch(e)
+    {
+      logger.error(e);
+    }
+    return;
+  }
+
   if(e.key === "ArrowDown")
   {
+    dcconSelectorCursorPaste = true;
     dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
     dcconSelectorCursor = (dcconListContainer.children.length === dcconSelectorCursor + 1)
     ? dcconSelectorCursor
@@ -620,6 +717,7 @@ const chatInputHandlerForArrow = (e) => {
   }
   if(e.key === "ArrowUp")
   {
+    dcconSelectorCursorPaste = false;
     dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
     dcconSelectorCursor = (dcconSelectorCursor <= 0) ? dcconSelectorCursor : dcconSelectorCursor - 1;
     dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.add("enlarge");
@@ -629,24 +727,57 @@ const chatInputHandlerForArrow = (e) => {
   {
     /**
      * TODO: 위 방향키 누르면 제일 처음으로 가버림
+     * 그냥 복사해주는 것으로만 하자
      */
     if(dcconSelectorCursor >= 0)
     {
       inputArea.focus();
       const image = dcconListContainer.children[dcconSelectorCursor];
-      const keyword = image.alt;
       const currentInput = getChatInputAreaContent(inputArea).innerText.trim().split(" ").pop();
-      const slicedKeyword = keyword.slice(currentInput.length);
-      const dataTransfer = new DataTransfer();
-      dataTransfer.setData("text", `${slicedKeyword} `);
-      const event = new ClipboardEvent("paste", {
-        clipboardData: dataTransfer,
-        bubbles: true,
-      });
-      inputArea.dispatchEvent(event);
-      currentChatText = currentChatText + slicedKeyword;
-      toggleSelector(false);
+      let keywords = image.getAttribute("data-keywords").split(",").map(w => `~${w}`);
+      let keyword = keywords[0];
+      let isPrefix = false;
+      for(let key of keywords)
+      {
+        if(key.startsWith(currentInput))
+        {
+          keyword = key;
+          isPrefix = true;
+        }
+      }
 
+      logger.debug(currentInput, keyword);
+      if(dcconSelectorCursorPaste && isPrefix)
+      {
+        const slicedKeyword = keyword.slice(currentInput.length);
+        const dataTransfer = new DataTransfer();
+        dataTransfer.setData("text", `${slicedKeyword} `);
+        const event = new ClipboardEvent("paste", { 
+          clipboardData: dataTransfer,
+          bubbles: true,
+        });
+        inputArea.dispatchEvent(event);
+        currentChatText = currentChatText + slicedKeyword;
+      }
+      else 
+      {
+        /**
+         * 클립보드에 복사만 되는 경우는 
+         * 커서가 끝으로 이동한 경우라서 
+         * 다시 선택기를 보여주지 않음.
+         */
+        showSelector = false;
+        if(isPrefix)
+        {
+          const slicedKeyword = keyword.slice(currentInput.length);
+          await navigator.clipboard.writeText(slicedKeyword);
+        }
+        else 
+        {
+          await navigator.clipboard.writeText(keyword);
+        }
+      }
+      toggleSelector(false);
       dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
       dcconSelectorCursor = -1;
       return;
@@ -657,6 +788,7 @@ const chatInputHandlerForArrow = (e) => {
    */  
   dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
   dcconSelectorCursor = -1;
+  dcconSelectorCursorPaste = true;
 }
 
 /**
@@ -676,7 +808,8 @@ const replaceChatData = (chatDiv) => {
       const dccon = findExactlyMatch(keyword);
       if(dccon)
       {
-        const img = preRenderedDccons.full[dccon.name];
+        const img = preRenderedDccons.full[dccon.name].cloneNode();
+        img.onclick = dcconClickHandlerInChat;
         parent.appendChild(document.createElement("br"));
         parent.appendChild(img);
         parent.appendChild(document.createElement("br"));
@@ -696,7 +829,7 @@ const replaceChatData = (chatDiv) => {
     parent.appendChild(txt);
   });
 
-  // logger(2, text, '=>', debugList.map(v => v.alt || v.innerText));
+  // logger.debug(text, '=>', debugList.map(v => v.alt || v.innerText));
 }
 
 /**
@@ -706,8 +839,12 @@ const replaceChatData = (chatDiv) => {
  * 보통 첫 시작때 호출함.
  */
 const replaceChatAll = () => {
-  chatArea && chatArea.querySelectorAll(".text-fragment").forEach(chatDiv => {
-    replaceChatData(chatDiv);
+  makeCallback(() => {
+    chatArea && chatArea.querySelectorAll(".text-fragment").forEach(chatDiv => {
+      replaceChatData(chatDiv);
+    });
+  }, () => {
+    setTippyInstance(false, false);
   });
 }
 
@@ -719,39 +856,67 @@ const replaceChatAll = () => {
  * @param {*} observer 
  */
 const chatObserverHandler = (mutationList, observer) => {
-  for(const record of mutationList)
-  {
-    const children = record.addedNodes;
-    for(const child of children)
+  makeCallback(() => {
+    for(const record of mutationList)
     {
-      child.querySelectorAll(".text-fragment").forEach(chatDiv => {
-        replaceChatData(chatDiv);
-      });
+      const children = record.addedNodes;
+      for(const child of children)
+      {
+        child.querySelectorAll(".text-fragment").forEach(chatDiv => {
+          replaceChatData(chatDiv);
+        });
+      }
     }
-  }
+  }, () => {
+    setTippyInstance(false, false);
+  });
 }
 
 /**
- * title 태그에 변화가 생겼을 때 호출됨.
+ * 각 페이지에서 사용되는 변수를 초기화함
+ */
+const resetVariables = () => {
+  lastUrl = location.href;
+  isWhitelist = false;
+  isVod = undefined;
+  isPopout = undefined;
+  watchingStreamer = undefined;
+  chromeLocalData = {};
+  dccons = [];
+  preRenderedDccons.full = {};
+  preRenderedDccons.small = {};
+
+  inputArea = undefined;
+  inputAreaParent = undefined;
+  inputAreaContent = undefined;
+
+  chatArea = undefined;
+  chatObserver && chatObserver.disconnect();
+  chatObserver = undefined;
+  chatSendButton = undefined;
+  currentChatText = "";
+  iconArea = undefined;
+
+  dcconSelectorRoot = undefined;
+  dcconSelectorWrapper = undefined;
+  dcconListContainer = undefined;
+  isSelectorOpen = false;
+  showSelector = true;
+  dcconSelectorCursor = -1;
+  dcconStatus = {};
+}
+
+/**
+ * 새로고침 해야할 지 판단함
  * 
  * 거의 모든 변수를 초기화하고 함수를 다시 시작함.
  * @param {*} mutationList 
  * @param {*} observer 
  */
-const titleObserverHandler = (mutationList, observer) => {
-  logger(1, `title changed! reloading...`);
-  dcconSelectorRoot = undefined;
-  dcconListContainer = undefined;
-  inputArea = undefined;
-  inputAreaContent = undefined;
-  inputAreaParent = undefined;
-  iconArea = undefined;
-  chatArea = undefined;
-  chatObserver && chatObserver.disconnect();
-  chatObserver = undefined;
-  isVod = location.href.indexOf("videos") !== -1;
-  isPopout = location.href.indexOf("popout") !== -1;
-
+const refreshObserverHandler = (mutationList, observer) => {
+  if(watchingStreamer && lastUrl === location.href) return;
+  logger.log(`url changed! reloading...`);
+  resetVariables();
   elementInitializer();
 }
 
@@ -811,22 +976,16 @@ const inputAreaParentExists = () => {
 const iconAreaExists = () => {
   if(document.getElementById("icon-list-button")) return;
 
-  const buttonClone = iconArea.lastChild.cloneNode(true);
-  const iconSpace = buttonClone.querySelector("svg");
+  const openSelectorButton = iconArea.lastChild.cloneNode(true);
+  const iconSpace = openSelectorButton.querySelector("svg");
   const icon = document.createElement("img");
 
-  buttonClone.id = "icon-list-button";
-  buttonClone.onclick = (event) => {
+  openSelectorButton.id = "icon-list-button";
+  openSelectorButton.onclick = (event) => {
     const open = !isSelectorOpen;
     if(open)
     {
-      dcconListContainer.innerHTML = "";
-      const dcconList = dcconFilter("");
-      for(const dccon of dcconList)
-      {
-        const itemIcon = preRenderedDccons.small[dccon.name];
-        dcconListContainer.appendChild(itemIcon);
-      }
+      constructSelectorItems("");
     }
     toggleSelector(open);
   }
@@ -835,7 +994,7 @@ const iconAreaExists = () => {
   icon.src = `https://twitch-icons.probius.dev/icon?${32}`;
   iconSpace.replaceWith(icon);
   
-  iconArea.insertBefore(buttonClone, iconArea.lastChild);
+  iconArea.insertBefore(openSelectorButton, iconArea.lastChild);
 }
 
 /**
@@ -861,7 +1020,7 @@ const elementInitializer = () => {
       const profileElement = await getProfile();
       if(profileElement === undefined || profileElement === null)
       {
-        logger(2, `Unable to find profile element. wait again...`);
+        logger.debug(`Unable to find profile element. wait again...`);
         return;
       }
       watchingStreamer = profileElement.href.split("/").pop().split("?")[0];
@@ -883,33 +1042,57 @@ const elementInitializer = () => {
   }
 
   /**
+   * dccon 로딩하는 함수
+   */
+  async function dcconLoader(){
+    try 
+    {
+      const response = await chrome.runtime.sendMessage({command: "refresh", streamer: watchingStreamer});
+      /**
+       * TODO:
+       * 이거 왜 자꾸 undefined로 나오냐
+       */
+      // logger.debug(response);
+      chromeLocalData = await chrome.storage.local.get();
+      dccons = chromeLocalData[watchingStreamer].data;
+      dcconStatus = chromeLocalData.dcconStatus;
+      makePreRenderedDccons(dccons);
+      logger.log(`loaded ${watchingStreamer}'s dccon! length: ${dccons.length}`);
+    }
+    catch(err)
+    {
+      logger.error(err);
+    }
+  }
+
+  /**
    * DOM을 찾는 함수
    */
   async function finder(){
     if(isVod === false)
     {
-      logger(2, "searching chat input area...");
+      logger.debug("searching chat input area...");
       inputArea = await getChatInputArea();
       if(inputArea)
       {
         inputAreaExists();
       }
 
-      logger(2, "searching chat input area parent...");
+      logger.debug("searching chat input area parent...");
       inputAreaParent = await getChatInputAreaParent();
       if(inputAreaParent)
       {
         inputAreaParentExists();
       }
       
-      logger(2, "searching chat icon area...");
+      logger.debug("searching chat icon area...");
       iconArea = await getIconArea();
       if(iconArea)
       {
         iconAreaExists();
       }
 
-      logger(2, "searching chat send button...");
+      logger.debug("searching chat send button...");
       chatSendButton = await getChatSendButton();
       if(chatSendButton)
       {
@@ -922,7 +1105,7 @@ const elementInitializer = () => {
       }
     }
 
-    logger(2, "searching chat area...");
+    logger.debug("searching chat area...");
     chatArea = await getChatArea();
     if(chatArea)
     { 
@@ -935,36 +1118,37 @@ const elementInitializer = () => {
   metaLoader();
   if(isWhitelist) finder();
   const job = setInterval(() => {
-    metaLoader();
-    if(!isWhitelist)
-    {
-      logger(1, `${watchingStreamer} is not in our whitelist`);
-      clearInterval(job);
-      return;
-    }
 
-    if(!dccons) dccons = chromeLocalData[watchingStreamer].data;
-    if(!dccons || dccons.length === 0)
-    {
-      chrome.runtime.sendMessage({command: "refresh", streamer: streamer}, async (response) => {
-        console.log(response.result);
-        chromeLocalData = await chrome.storage.local.get();
-        dccons = chromeLocalData[watchingStreamer].data;
-      });
-    }
-    makePreRenderedDccons(dccons);
+    makeCallback(() => {
+      metaLoader();
+      if(!isWhitelist)
+      {
+        logger.log(`${watchingStreamer} is not in our whitelist`);
+        clearInterval(job);
+        return;
+      }
+    }, () => {
+      const getDcconCondition = (!chromeLocalData || chromeLocalData.length === 0 || !dccons || dccons.length === 0);
+      const getElementCondition = ((isVod === false && (!inputArea || !iconArea || !chatSendButton)) || !chatArea);
 
-    logger(1, `loaded ${watchingStreamer}'s dccon! length: ${dccons.length}`);
-
-    if((isVod === false && (!inputArea || !iconArea || !chatSendButton)) || !chatArea)
-    {
-      finder();
-    }
-    else 
-    {
-      logger(1, `loaded!`);
-      clearInterval(job);
-    }
+      if(getDcconCondition || getElementCondition)
+      {
+        if(getDcconCondition)
+        {
+          dcconLoader();
+        }
+        if(getElementCondition)
+        {
+          finder();
+        }
+      }
+      else 
+      {
+        logger.log(`loaded!`);
+        // logger.debug(`isVod`, isVod, `inputArea`, inputArea, 'chatArea', chatArea, 'dccons', dccons);
+        clearInterval(job);
+      }
+    })
   }, 100);
 }
 
@@ -972,12 +1156,12 @@ const elementInitializer = () => {
  * 스크립트 실행!
  */
 const run = async () => {
-  logger(1, "start loading...");
+  logger.log("start loading...");
   chromeLocalData = (await chrome.storage.local.get());
 
-  titleArea = document.getElementsByTagName('title')[0];
-  titleObserver = new MutationObserver(titleObserverHandler);
-  titleObserver.observe(titleArea, titleObserverOptions);
+  lastUrl = location.href;
+  refreshObserver = new MutationObserver(refreshObserverHandler);
+  refreshObserver.observe(document, refreshObserverOptions);
 
   elementInitializer();
 }

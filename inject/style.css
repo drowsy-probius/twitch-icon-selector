@@ -82,6 +82,14 @@ img.dccon-item:hover
   height: 45px !important;
 }
 
+.tippy-box[data-theme~='twitch'] {
+  background-color: black;
+}
+
+.tippy-box[data-theme~='twitch'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: black;
+}
+
 
 .hide
 {

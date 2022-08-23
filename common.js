@@ -17,9 +17,18 @@ const apiParsers = {
   "funzinnu": parserFunzinnu,
 }
 
+export const makeCallback = (execute, callback) => {
+  return new Promise((resolve, reject) => {
+    try{ resolve(execute()); } catch(e) { reject(e) }
+  })
+  .then(_ => {
+    callback();
+  })
+}
+
 export const getLatestData = async (streamer_id) => {
   if(streamer_id === undefined) throw `streamer id is undefined`;
-  if(!(streamer_id in URLS)) throw `this streamer (${streamer_id}) currently not supported`;
+  if(!isValidStreamer(streamer_id)) throw `this streamer (${streamer_id}) currently not supported`;
 
   return fetch(
     URLS[streamer_id],
@@ -76,3 +85,6 @@ export const isOutdated = (timestamp) => {
   return (Date.now() - timestamp) > DAY_IN_MISEC;
 }
 
+export const isValidStreamer = (streamer) => {
+  return streamer in URLS;
+}

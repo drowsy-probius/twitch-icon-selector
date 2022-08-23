@@ -1,6 +1,6 @@
 {
-  "name": "Twitch DCCON Selector",
-  "description": "Twitch DCCON Selector for some streamers",
+  "name": "트위치 디시콘 선택기",
+  "description": "호환되는 트위치 스트리머의 채팅창에서 디시콘을 사용할 수 있습니다.",
   "version": "1.0.0",
   "manifest_version": 3,
   "background": {
@@ -22,7 +22,7 @@
     "alarms"
   ],
   "action": {
-    "default_title": "DCCON Selector",
+    "default_title": "디시콘 선택기",
     "default_popup": "./popup/index.html"
   },
   "content_scripts": [

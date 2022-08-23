@@ -1,25 +1,12 @@
-import { DAY_IN_MISEC, DAY_IN_MIN, getLatestData, isOutdated, formLocalStorageData } from "../common.js";
+import { DAY_IN_MIN, getLatestData, isOutdated, formLocalStorageData, isValidStreamer, makeCallback } from "../common.js";
 
 
 const onStartup = () =>{
-  // // for debug
-  // chrome.alarms.create('dccon-cronjob', {
-  //   when: Date.now() + 1000, // execute after 2 sec
-  //   periodInMinutes: 1,
-  // })
-
   chrome.alarms.get('dccon-cronjob', (cronjob) => {
       chrome.alarms.create('dccon-cronjob', {
         when: Date.now() + 1000, // execute after 1 secs
         periodInMinutes: DAY_IN_MIN,
       })
-    // if(!cronjob)
-    // {
-    //   chrome.alarms.create('dccon-cronjob', {
-    //     when: Date.now() + (DAY_IN_MISEC / (24 * 120)), // execute after 5 minutes
-    //     periodInMinutes: DAY_IN_MIN,
-    //   })
-    // }
   });
 }
 
@@ -57,7 +44,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('runtime.onMessage -- ' + 
     ("tab" in sender ?
     "from a content script:" + sender.tab.url :
@@ -68,13 +55,31 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     try
     {
       const streamer = request.streamer;
-      const data = await getLatestData(streamer);
-      const localData = await chrome.storage.local.get();
-      localData[streamer] = formLocalStorageData(data);
-      chrome.storage.local.set(localData, () => {
-        console.log(`Refresh ${streamer} done!`);
+      let localData;
+
+      if(!isValidStreamer(streamer))
+      {
+        return sendResponse({result: false});
+      }
+
+      chrome.storage.local.get((data) => {
+        localData = data;
+        if(!isOutdated(localData[streamer].timestamp))
+        {
+          console.log(`Data for ${streamer} is not Outdated. Skip updating...`);
+          return sendResponse({result: true});
+        }
       });
-      return sendResponse({result: true});
+
+      makeCallback(async () => {
+        const data = await getLatestData(streamer);
+        localData[streamer] = formLocalStorageData(data);
+      }, () => {
+        chrome.storage.local.set(localData, () => {
+          console.log(`Refresh ${streamer} done!`);
+          return sendResponse({result: true});
+        });
+      })
     }
     catch(e)
     {
@@ -82,8 +87,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       return sendResponse({result: false});
     }
   }
-
-  return sendResponse(true);
 });
 
 onStartup();
