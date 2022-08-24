@@ -3,10 +3,10 @@ import { DEFAULT_LOCALSTORAGE, URLS, DAY_IN_MIN, getLatestData, isOutdated, form
 
 const onStartup = () =>{
   chrome.alarms.get('dccon-cronjob', (cronjob) => {
-      chrome.alarms.create('dccon-cronjob', {
-        when: Date.now() + 2000, // execute after 2s
-        periodInMinutes: DAY_IN_MIN,
-      })
+    chrome.alarms.create('dccon-cronjob', {
+      when: Date.now() + 2000, // execute after 2s
+      periodInMinutes: DAY_IN_MIN,
+    })
   });
 }
 
@@ -60,6 +60,7 @@ const cronjob = () => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set(DEFAULT_LOCALSTORAGE);
   console.log(`Hello, Welcome! data installed to your localstorage: `, DEFAULT_LOCALSTORAGE);
+  onStartup();
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -96,22 +97,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         localData = {
           ...data
         };
-        if(!isOutdated(localData.dcconMetadata[streamer].timestamp))
-        {
-          console.log(`Data for ${streamer} is not Outdated. Skip updating...`);
-          return sendResponse({result: true});
-        }
-      });
 
-      makeCallback(async () => {
-        const data = await getLatestData(streamer);
-        localData.dcconMetadata[streamer] = formLocalStorageData(data);
-      }, () => {
-        chrome.storage.local.set(localData, () => {
-          console.log(`Refresh ${streamer} done!`);
-          return sendResponse({result: true});
-        });
-      })
+        makeCallback(async () => {
+          const data = await getLatestData(streamer);
+          localData.dcconMetadata[streamer] = formLocalStorageData(data);
+        }, () => {
+          chrome.storage.local.set(localData, () => {
+            console.log(`Refresh ${streamer} done!`);
+            return sendResponse({result: true});
+          });
+        })
+      });
     }
     catch(e)
     {
