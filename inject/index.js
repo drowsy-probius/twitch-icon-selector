@@ -1076,7 +1076,13 @@ const elementInitializer = () => {
        */
       // logger.debug(response);
       chromeLocalData = await chrome.storage.local.get();
-      dccons = chromeLocalData.dcconMetadata[watchingStreamer].data;
+      const streamerData = chromeLocalData.dcconMetadata[watchingStreamer];
+      if(streamerData === undefined)
+      {
+        logger.log(`${watchingStreamer} is not in local cache.`, chromeLocalData);
+        return;
+      }
+      dccons = streamerData.data;
       dcconStatus = chromeLocalData.dcconStatus[watchingStreamer];
       makePreRenderedDccons(dccons);
       logger.log(`loaded ${watchingStreamer}'s dccon! length: ${dccons.length}`);
@@ -1141,36 +1147,33 @@ const elementInitializer = () => {
   if(isWhitelist) finder();
   const job = setInterval(() => {
 
-    makeCallback(() => {
-      metaLoader();
-      if(!isWhitelist)
-      {
-        logger.log(`${watchingStreamer} is not in our whitelist`);
-        clearInterval(job);
-        return;
-      }
-    }, () => {
-      const getDcconCondition = (!chromeLocalData || chromeLocalData.length === 0 || !dccons || dccons.length === 0);
-      const getElementCondition = ((isVod === false && (!inputArea || !iconArea || !chatSendButton)) || !chatArea);
+    metaLoader();
+    if(!isWhitelist)
+    {
+      logger.log(`${watchingStreamer} is not in our whitelist`);
+      clearInterval(job);
+      return;
+    }
+    const getDcconCondition = (!chromeLocalData || chromeLocalData.length === 0 || !dccons || dccons.length === 0);
+    const getElementCondition = ((isVod === false && (!inputArea || !iconArea || !chatSendButton)) || !chatArea);
 
-      if(getDcconCondition || getElementCondition)
+    if(getDcconCondition || getElementCondition)
+    {
+      if(getDcconCondition)
       {
-        if(getDcconCondition)
-        {
-          dcconLoader();
-        }
-        if(getElementCondition)
-        {
-          finder();
-        }
+        dcconLoader();
       }
-      else 
+      if(getElementCondition)
       {
-        logger.log(`loaded!`);
-        // logger.debug(`isVod`, isVod, `inputArea`, inputArea, 'chatArea', chatArea, 'dccons', dccons);
-        clearInterval(job);
+        finder();
       }
-    })
+    }
+    else 
+    {
+      logger.log(`loaded!`);
+      // logger.debug(`isVod`, isVod, `inputArea`, inputArea, 'chatArea', chatArea, 'dccons', dccons);
+      clearInterval(job);
+    }
   }, 100);
 }
 

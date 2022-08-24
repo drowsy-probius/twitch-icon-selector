@@ -101,6 +101,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         makeCallback(async () => {
           const data = await getLatestData(streamer);
           localData.dcconMetadata[streamer] = formLocalStorageData(data);
+          console.log(streamer, data);
         }, () => {
           chrome.storage.local.set(localData, () => {
             console.log(`Refresh ${streamer} done!`);
