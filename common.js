@@ -35,7 +35,7 @@ export const getLatestData = async (streamer_id) => {
   if(!isValidStreamer(streamer_id)) throw `this streamer (${streamer_id}) currently not supported`;
 
   return fetch(
-    URLS[streamer_id],
+    `URLS[streamer_id]?ts=${Date.now()}`,
     {
       method: "get",
       headers: {"Content-Type": "application/json"}
