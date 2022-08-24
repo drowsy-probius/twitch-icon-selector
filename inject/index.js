@@ -92,6 +92,13 @@ let chatSendButton;
 let currentChatText;
 
 /**
+ * 마지막에 검색된 키워드
+ * 이전과 같으면 새로 구성하지 않으므로
+ * 연산 절약 가능
+ */
+let lastSearchKeyword;
+
+/**
  * 채팅창에서 부가 버튼 공간. 이 곳에 앱 아이콘 넣을 것임
  */
 let iconArea;
@@ -139,12 +146,14 @@ let refreshObserver;
 let dcconSelectorCursor = -1;
 
 /**
- * 디시콘 선택기에서 위 커서를 사용하면
- * 바로 붙여넣기 안되게 막는 함수
+ * 디시콘 선택기에서 현재 커서 아이템을
+ * 바로 붙여넣기 가능한지에 대한 값.
  * 
- * false면 클립보드에 복사만 함.
+ * 커서가 오른쪽으로 이동하면 +, 왼쪽으로 이동하면 -값을 더하며
+ * 최대 값은 0임.
+ * 값이 0이면 붙여넣기 가능
  */
-let dcconSelectorCursorPaste = true;
+let dcconSelectorCursorPaste = 0;
 
 /**
  * 사용자가 입력한 디시콘 통계
@@ -285,22 +294,6 @@ const getChatSendButton = () => {
  */
 const getProfile = () => {
   return waitForElement('[data-a-target="watch-mode-to-home"]');
-}
-
-/**
- * 
- * @param {Element} target 
- * @param {MouseEvent} mouseEvent 
- * @returns Object {x: number, y: number}
- */
-const getRelativePosition = (target, mouseEvent) => {
-  const {x, y} = target.getBoundingClientRect();
-  const {clientX, clientY} = mouseEvent;
-
-  return {
-    x: clientX - x,
-    y: clientY - y,
-  }
 }
 
 /**
@@ -538,6 +531,7 @@ const toggleSelector = (open) => {
       dcconSelectorRoot.classList.remove("hide");
       dcconSelectorRoot.classList.add("show");
       isSelectorOpen = true;
+      dcconSelectorCursorPaste = 0;
     }, () => {
       setTippyInstance(true, false);
     });
@@ -565,6 +559,9 @@ const toggleSelector = (open) => {
  * @param {string} keyword 
  */
 const constructSelectorItems = (keyword) => {
+  if(lastSearchKeyword === keyword) return;
+  lastSearchKeyword = keyword;
+
   dcconListContainer.innerHTML = "";
   const dcconList = dcconFilter(keyword);
   for(const dccon of dcconList)
@@ -648,6 +645,7 @@ const dcconClickHandlerInChat = async (e) => {
 const chatInputHandler = (e) => {
   if(!inputArea || !dcconSelectorRoot) return;
   const text = inputArea.innerText.trimStart();
+  const isInputChanged = (currentChatText !== text);
   currentChatText = text + "";
   if(e.key === "Escape")
   {
@@ -668,15 +666,20 @@ const chatInputHandler = (e) => {
   }
   if(!showSelector) return;
 
+  const isSelectArrowKey = (e.key === "ArrowRight" || e.key === "ArrowLeft");
+
   const keyword = text.split(" ").pop();
-  if(text.length === 0 || keyword.length === 0 || !keyword.startsWith("~"))
+  if(!isSelectArrowKey && (text.length === 0 || keyword.length === 0 || !keyword.startsWith("~")))
   {
     toggleSelector(false);
     return;
   }
 
-  toggleSelector(true);
-  constructSelectorItems(keyword.slice(1));
+  if(isInputChanged)
+  {
+    toggleSelector(true);
+    constructSelectorItems(keyword.slice(1));
+  }
 }
 
 /**
@@ -687,7 +690,6 @@ const chatInputHandler = (e) => {
  */
 const chatInputHandlerForArrow = async (e) => {
   const text = inputArea.innerText.trimStart();
-  currentChatText = text + "";
   if(e.key === "Enter")
   {
     /**
@@ -696,6 +698,7 @@ const chatInputHandlerForArrow = async (e) => {
      */
     try
     {
+      currentChatText = text + "";
       makeStatusFromInput(currentChatText);
       toggleSelector(false);
     }
@@ -706,25 +709,41 @@ const chatInputHandlerForArrow = async (e) => {
     return;
   }
 
-  if(e.key === "ArrowDown")
+  if(e.key === "ArrowRight")
   {
-    dcconSelectorCursorPaste = true;
-    dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
+    if(dcconSelectorCursor >= 0) dcconListContainer.children[dcconSelectorCursor].classList.remove("selected");
     dcconSelectorCursor = (dcconListContainer.children.length === dcconSelectorCursor + 1)
     ? dcconSelectorCursor
     : dcconSelectorCursor + 1;
-    dcconListContainer.children[dcconSelectorCursor].classList.add("enlarge");
+    dcconListContainer.children[dcconSelectorCursor].classList.add("selected");
+    if(dcconSelectorCursorPaste < 0) dcconSelectorCursorPaste += 1;
+
+    if(dcconSelectorCursor >= 0)
+    {
+      const imagePos = dcconListContainer.children[dcconSelectorCursor].getBoundingClientRect();
+      const selectorPos = dcconSelectorWrapper.getBoundingClientRect();
+      const scrollAmount = imagePos.y - selectorPos.y - 5;
+      if(scrollAmount !== 0) dcconSelectorWrapper.scrollTop += scrollAmount;
+    }
     return;
   }
-  if(e.key === "ArrowUp")
+  if(e.key === "ArrowLeft")
   {
-    dcconSelectorCursorPaste = false;
-    dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
+    dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("selected");
     dcconSelectorCursor = (dcconSelectorCursor <= 0) ? dcconSelectorCursor : dcconSelectorCursor - 1;
-    dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.add("enlarge");
+    dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.add("selected");
+    dcconSelectorCursorPaste -= 1;
+
+    if(dcconSelectorCursor >= 0)
+    {
+      const imagePos = dcconListContainer.children[dcconSelectorCursor].getBoundingClientRect();
+      const selectorPos = dcconSelectorWrapper.getBoundingClientRect();
+      const scrollAmount = imagePos.y - selectorPos.y - 5;
+      if(scrollAmount !== 0) dcconSelectorWrapper.scrollTop += scrollAmount;
+    }
     return;
   }
-  if(e.key === "ArrowRight")
+  if(e.key === "ArrowDown")
   {
     /**
      * TODO: 위 방향키 누르면 제일 처음으로 가버림
@@ -747,8 +766,9 @@ const chatInputHandlerForArrow = async (e) => {
         }
       }
 
+      const doPaste = (dcconSelectorCursorPaste === 0 || text.length === 0);
       logger.debug(currentInput, keyword);
-      if(dcconSelectorCursorPaste && isPrefix)
+      if(doPaste && isPrefix)
       {
         const slicedKeyword = keyword.slice(currentInput.length);
         const dataTransfer = new DataTransfer();
@@ -779,17 +799,17 @@ const chatInputHandlerForArrow = async (e) => {
         }
       }
       toggleSelector(false);
-      dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
+      dcconListContainer.children[dcconSelectorCursor].classList.remove("selected");
       dcconSelectorCursor = -1;
+      dcconSelectorCursorPaste = 0;
       return;
     }
   }
   /**
    * 이 부분은 특수 키가 아닐 때만 실행됨 => 변수 초기화
    */  
-  dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("enlarge");
+  dcconSelectorCursor >= 0 && dcconListContainer.children[dcconSelectorCursor].classList.remove("selected");
   dcconSelectorCursor = -1;
-  dcconSelectorCursorPaste = true;
 }
 
 /**
@@ -904,6 +924,7 @@ const resetVariables = () => {
   isSelectorOpen = false;
   showSelector = true;
   dcconSelectorCursor = -1;
+  dcconSelectorCursorPaste = 0;
   dcconStatus = {};
 }
 
