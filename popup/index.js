@@ -1,10 +1,14 @@
-import { APP_VERSION, URLS, getLatestData, getStreamerFromURL, formLocalStorageData } from "../common.js";
+import { 
+  APP_VERSION, 
+  STREAMERS, 
+} from "../common.js";
 
 const makeStreamerLIst = async () => {
   const streamerListElement = document.querySelector(".main-list");
   streamerListElement.innerHTML = "";
   const chromeLocalData = await chrome.storage.local.get();
-  for(const streamer of Object.keys(URLS))
+  const metadata = chromeLocalData.dcconMetadata;
+  for(const streamer of Object.keys(metadata))
   {
     const timestamp = chromeLocalData.dcconMetadata[streamer].timestamp;
 
@@ -17,7 +21,7 @@ const makeStreamerLIst = async () => {
     entry.classList.add("streamer");
     timestampElem.classList.add("timestamp");
 
-    anchor.href = URLS[streamer];
+    anchor.href = `https://twitch.tv/${streamer}`;
     anchor.innerText = streamer;
     anchor.target = "_blank";
     timestampElem.innerText = timeString;
@@ -33,10 +37,7 @@ const refreshData = async () => {
   try
   {
     // const streamer = await getStreamerFromURL();
-    await Promise.all(Object.keys(URLS).map((streamer) => {
-      return chrome.runtime.sendMessage({command: "refresh", streamer: streamer});
-    }));
-
+    await chrome.runtime.sendMessage({command: "refresh_all"});
     await makeStreamerLIst();
   }
   catch(e)

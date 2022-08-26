@@ -1,4 +1,14 @@
-import { DEFAULT_LOCALSTORAGE, URLS, DAY_IN_MIN, getLatestData, isOutdated, formLocalStorageData, isValidStreamer, makeCallback, DAY_IN_MISEC } from "../common.js";
+import { 
+  DEFAULT_LOCALSTORAGE, 
+  STREAMERS, 
+  DAY_IN_MIN, 
+  getStreamerList,
+  getLatestData, 
+  isOutdated, 
+  formLocalStorageData, 
+  isValidStreamer, 
+  makeCallback, 
+} from "../common.js";
 
 
 const onStartup = () =>{
@@ -22,7 +32,12 @@ const cronjob = () => {
       ...result
     }
 
-    for(const streamer of Object.keys(URLS))
+    if(STREAMERS.length === 0)
+    {
+      await getStreamerList();
+    }
+
+    for(const streamer of STREAMERS)
     {
       let hasData = (streamer in dcconMetadata);
       let hasStatusData = (streamer in dcconStatus);
@@ -48,6 +63,8 @@ const cronjob = () => {
       const newMetadata = await getLatestData(streamer);
       newLocalData.dcconMetadata[streamer] = formLocalStorageData(newMetadata);
     }
+
+    console.log(newLocalData);
 
     chrome.storage.local.set(newLocalData, () => {
       console.log(`Refresh done!`);
@@ -107,7 +124,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log(`Refresh ${streamer} done!`);
             return sendResponse({result: true});
           });
-        })
+        });
       });
     }
     catch(e)
@@ -115,5 +132,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.error(e);
       return sendResponse({result: false});
     }
+  }
+  else if(request.command === "refresh_all")
+  {
+    let localData;
+    chrome.storage.local.get((data) => {
+      localData = {
+        ...data
+      };
+      
+      const streamers = Object.keys(localData.dcconMetadata)
+      for(const streamer of streamers)
+      {
+        makeCallback(async () => {
+          const data = await getLatestData(streamer);
+          localData.dcconMetadata[streamer] = formLocalStorageData(data);
+          console.log(streamer, data);
+        }, () => {
+          chrome.storage.local.set(localData, () => {
+            console.log(`Refresh ${streamer} done!`);
+            return sendResponse({result: true});
+          });
+        });
+      }
+    });
   }
 });
