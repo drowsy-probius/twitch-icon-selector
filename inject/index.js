@@ -1,7 +1,3 @@
-const WHITELIST_STREAMERS = [
-  "funzinnu"
-];
-
 /***************************************************** */
 const chatObserverOptions = {
   childList: true,
@@ -1061,12 +1057,9 @@ const elementInitializer = () => {
       watchingStreamer = location.href.split("/").pop().split("?")[0];
     }
     watchingStreamer = watchingStreamer.toLowerCase();
-    isWhitelist = WHITELIST_STREAMERS.includes(watchingStreamer);
-
-    /** FOR DEV */
-    // watchingStreamer = "funzinnu";
-    // isWhitelist = true;
-    /** FOR DEV */
+    chromeLocalData = await chrome.storage.local.get();
+    const streamers = Object.keys(chromeLocalData.dcconMetadata);
+    isWhitelist = streamers.includes(watchingStreamer);
   }
 
   /**
@@ -1081,8 +1074,8 @@ const elementInitializer = () => {
        * 이거 왜 자꾸 undefined로 나오냐
        */
       // logger.debug(response);
-      chromeLocalData = await chrome.storage.local.get();
       const streamerData = chromeLocalData.dcconMetadata[watchingStreamer];
+
       if(streamerData === undefined)
       {
         logger.log(`${watchingStreamer} is not in local cache.`, chromeLocalData);

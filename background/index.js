@@ -1,12 +1,10 @@
 import { 
   DEFAULT_LOCALSTORAGE, 
-  STREAMERS, 
   DAY_IN_MIN, 
   getStreamerList,
   getLatestData, 
   isOutdated, 
   formLocalStorageData, 
-  isValidStreamer, 
   makeCallback, 
 } from "../common.js";
 
@@ -20,8 +18,10 @@ const onStartup = () =>{
   });
 }
 
-const cronjob = () => {
+const cronjob = async () => {
   console.log(`Execute refresh job!`);
+
+  const streamers = await getStreamerList();
 
   chrome.storage.local.get(async result => {
     console.log(result);
@@ -32,12 +32,7 @@ const cronjob = () => {
       ...result
     }
 
-    if(STREAMERS.length === 0)
-    {
-      await getStreamerList();
-    }
-
-    for(const streamer of STREAMERS)
+    for(const streamer of streamers)
     {
       let hasData = (streamer in dcconMetadata);
       let hasStatusData = (streamer in dcconStatus);
@@ -105,10 +100,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const streamer = request.streamer;
       let localData;
 
-      if(!isValidStreamer(streamer))
-      {
-        return sendResponse({result: false});
-      }
 
       chrome.storage.local.get((data) => {
         localData = {
@@ -136,12 +127,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   else if(request.command === "refresh_all")
   {
     let localData;
-    chrome.storage.local.get((data) => {
+    chrome.storage.local.get(async (data) => {
       localData = {
         ...data
       };
       
-      const streamers = Object.keys(localData.dcconMetadata)
+      const streamers = await getStreamerList();
       for(const streamer of streamers)
       {
         makeCallback(async () => {

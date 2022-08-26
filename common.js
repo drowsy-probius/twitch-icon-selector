@@ -12,13 +12,9 @@ export const DEFAULT_LOCALSTORAGE = {
 ////////////////////////////////////////////////////////////
 // 파서
 
-const parserFunzinnu = async (res) => {
+const apiParser = async (res) => {
   const json = await res.json();
   return json.icons;
-}
-
-const apiParsers = {
-  "funzinnu": parserFunzinnu,
 }
 
 ////////////////////////////////////////////////////////////
@@ -61,10 +57,6 @@ export const getStreamerList = async () => {
 }
 
 export const getLatestData = async (streamer_id) => {
-  if(streamer_id === undefined) throw `streamer id is undefined`;
-  if(STREAMERS.length === 0) await getStreamerList();
-  if(!isValidStreamer(streamer_id)) throw `this streamer (${streamer_id}) currently not supported`;
-
   return fetch(
     `${API}/list/${streamer_id}`,
     {
@@ -73,7 +65,7 @@ export const getLatestData = async (streamer_id) => {
     }
   )
   .then(async res => {
-    return await apiParsers[streamer_id](res);
+    return await apiParser(res);
   })
   .catch(async e => {
     throw e;
@@ -92,8 +84,4 @@ export const isOutdated = (timestamp) => {
    * 24h = 1000 * 60 * 60 * 24
    */
   return (Date.now() - timestamp) > DAY_IN_MISEC;
-}
-
-export const isValidStreamer = (streamer) => {
-  return STREAMERS.includes(streamer);
 }
