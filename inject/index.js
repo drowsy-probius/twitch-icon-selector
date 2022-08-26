@@ -391,6 +391,7 @@ const makePreRenderedDccons = (dccons) => {
     fullImg.alt = `~${dccon.keywords[0]}`;
     fullImg.height = "100px";
     fullImg.setAttribute("data-uri", dccon.uri);
+    fullImg.setAttribute("data-hash", dccon.nameHash);
     fullImg.setAttribute("data-name", dccon.name);
     fullImg.setAttribute("data-keywords", dccon.keywords);
     fullImg.setAttribute("data-tags", dccon.tags);
@@ -407,14 +408,15 @@ const makePreRenderedDccons = (dccons) => {
     smallImg.alt = `~${dccon.keywords[0]}`;
     smallImg.height - "40px";
     smallImg.setAttribute("data-uri", dccon.thumbnailUri);
+    smallImg.setAttribute("data-hash", dccon.nameHash);
     smallImg.setAttribute("data-name", dccon.name);
     smallImg.setAttribute("data-keywords", `${dccon.keywords}`);
     smallImg.setAttribute("data-tags", dccon.tags);
     smallImg.setAttribute("data-tippy-content", `~${dccon.keywords[0]}`);
     smallImg.onclick = dcconClickHandler;
 
-    preRenderedDccons.full[dccon.name] = fullImg;
-    preRenderedDccons.small[dccon.name] = smallImg;
+    preRenderedDccons.full[dccon.nameHash] = fullImg;
+    preRenderedDccons.small[dccon.nameHash] = smallImg;
   });
   setTippyInstance();
 }
@@ -568,7 +570,7 @@ const constructSelectorItems = (keyword) => {
   const dcconList = dcconFilter(keyword);
   for(const dccon of dcconList)
   {
-    const itemIcon = preRenderedDccons.small[dccon.name];
+    const itemIcon = preRenderedDccons.small[dccon.nameHash];
     dcconListContainer.appendChild(itemIcon);
   }
 }
@@ -831,7 +833,7 @@ const replaceChatData = (chatDiv) => {
       const dccon = findExactlyMatch(keyword);
       if(dccon)
       {
-        const img = preRenderedDccons.full[dccon.name].cloneNode();
+        const img = preRenderedDccons.full[dccon.nameHash].cloneNode();
         img.onclick = dcconClickHandlerInChat;
         parent.appendChild(document.createElement("br"));
         parent.appendChild(img);
