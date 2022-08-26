@@ -390,6 +390,7 @@ const makePreRenderedDccons = (dccons) => {
     fullImg.src = dccon.uri;
     fullImg.alt = `~${dccon.keywords[0]}`;
     fullImg.height = "100px";
+    fullImg.onerror = `this.onerror=null; this.src="${dccon.originUri}";`;
     fullImg.setAttribute("data-uri", dccon.uri);
     fullImg.setAttribute("data-hash", dccon.nameHash);
     fullImg.setAttribute("data-name", dccon.name);
@@ -407,6 +408,7 @@ const makePreRenderedDccons = (dccons) => {
     smallImg.src = dccon.thumbnailUri;
     smallImg.alt = `~${dccon.keywords[0]}`;
     smallImg.height - "40px";
+    smallImg.onerror = `this.onerror=null; this.src="${dccon.originUri}";`;
     smallImg.setAttribute("data-uri", dccon.thumbnailUri);
     smallImg.setAttribute("data-hash", dccon.nameHash);
     smallImg.setAttribute("data-name", dccon.name);
