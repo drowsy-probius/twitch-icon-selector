@@ -1,6 +1,5 @@
 import { 
   APP_VERSION, 
-  STREAMERS, 
 } from "../common.js";
 
 const makeStreamerLIst = async () => {

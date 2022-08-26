@@ -387,9 +387,10 @@ const makePreRenderedDccons = (dccons) => {
   dccons.forEach(dccon => {
     const fullImg = document.createElement("img");
     fullImg.classList.add("dccon");
-    fullImg.src = dccon.imageUrl;
+    fullImg.src = dccon.uri;
     fullImg.alt = `~${dccon.keywords[0]}`;
-    fullImg.setAttribute("data-uri", dccon.imageUrl);
+    fullImg.height = "100px";
+    fullImg.setAttribute("data-uri", dccon.uri);
     fullImg.setAttribute("data-name", dccon.name);
     fullImg.setAttribute("data-keywords", dccon.keywords);
     fullImg.setAttribute("data-tags", dccon.tags);
@@ -402,9 +403,10 @@ const makePreRenderedDccons = (dccons) => {
 
     const smallImg = document.createElement("img");
     smallImg.classList.add("dccon-item");
-    smallImg.src = dccon.thumbnailUrl;
+    smallImg.src = dccon.thumbnailUri;
     smallImg.alt = `~${dccon.keywords[0]}`;
-    smallImg.setAttribute("data-uri", dccon.thumbnailUrl);
+    smallImg.height - "40px";
+    smallImg.setAttribute("data-uri", dccon.thumbnailUri);
     smallImg.setAttribute("data-name", dccon.name);
     smallImg.setAttribute("data-keywords", `${dccon.keywords}`);
     smallImg.setAttribute("data-tags", dccon.tags);
