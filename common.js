@@ -5,8 +5,8 @@ export let STREAMERS = [];
 const API = "https://twitch-icons.probius.dev"
 
 export const DEFAULT_LOCALSTORAGE = { 
-  dcconMetadata: {},
-  dcconStatus: {},
+  iconMetadata: {},
+  iconStats: {},
 }
 
 ////////////////////////////////////////////////////////////

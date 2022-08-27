@@ -30,14 +30,33 @@
         "*://*.twitch.tv/*",
         "*://twitch.tv/*"
       ],
+      "css": [
+        "./inject/style.css"
+      ],
       "js": [
         "./thirdparty/popper.2.11.6.min.js",
         "./thirdparty/tippy-bundle.umd.6.3.7.min.js",
-        "./inject/index.js"
+
+        "./inject/00-init/1-constants.js",
+        "./inject/00-init/2-variables.js",
+        "./inject/00-init/3-functions.js",
+        "./inject/00-init/4-storage.js",
+        "./inject/00-init/5-observer.js",
+
+        "./inject/10-find/1-url.js",
+        "./inject/10-find/2-elements.js",
+        "./inject/10-find/3-streamer.js",
+
+        "./inject/90-run/1-functions.js",
+        "./inject/90-run/2-createList.js",
+        "./inject/90-run/3-modify.js",
+        "./inject/90-run/4-observer.js",
+
+
+
+        "./inject/main.js"
       ],
-      "css": [
-        "./inject/style.css"
-      ]
+      "run_at": "document_end"
     }
   ]
 }

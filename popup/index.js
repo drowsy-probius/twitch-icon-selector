@@ -6,10 +6,10 @@ const makeStreamerLIst = async () => {
   const streamerListElement = document.querySelector(".main-list");
   streamerListElement.innerHTML = "";
   const chromeLocalData = await chrome.storage.local.get();
-  const metadata = chromeLocalData.dcconMetadata;
+  const metadata = chromeLocalData.iconMetadata;
   for(const streamer of Object.keys(metadata))
   {
-    const timestamp = chromeLocalData.dcconMetadata[streamer].timestamp;
+    const timestamp = chromeLocalData.iconMetadata[streamer].timestamp;
 
     const date = new Date(timestamp);
     const timeString = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;

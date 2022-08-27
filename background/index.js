@@ -10,8 +10,8 @@ import {
 
 
 const onStartup = () =>{
-  chrome.alarms.get('dccon-cronjob', (cronjob) => {
-    chrome.alarms.create('dccon-cronjob', {
+  chrome.alarms.get('icon-cronjob', (cronjob) => {
+    chrome.alarms.create('icon-cronjob', {
       when: Date.now() + 2000, // execute after 2s
       periodInMinutes: DAY_IN_MIN,
     })
@@ -26,27 +26,27 @@ const cronjob = async () => {
   chrome.storage.local.get(async result => {
     console.log(result);
 
-    const dcconMetadata = result.dcconMetadata;
-    const dcconStatus = result.dcconStatus;
+    const iconMetadata = result.iconMetadata;
+    const iconStats = result.iconStats;
     const newLocalData = {
       ...result
     }
 
     for(const streamer of streamers)
     {
-      let hasData = (streamer in dcconMetadata);
-      let hasStatusData = (streamer in dcconStatus);
+      let hasData = (streamer in iconMetadata);
+      let hasStatsData = (streamer in iconStats);
       let isDataOutdated = true;
       
       if(hasData)
       {
-        const metadata = dcconMetadata[streamer];
+        const metadata = iconMetadata[streamer];
         isDataOutdated = (metadata.length === 0 || isOutdated(metadata["timestamp"]))
       }
 
-      if(!hasStatusData)
+      if(!hasStatsData)
       {
-        newLocalData.dcconStatus[streamer] = {};
+        newLocalData.iconStats[streamer] = {};
       }
 
       if(!isDataOutdated)
@@ -56,10 +56,9 @@ const cronjob = async () => {
       }
 
       const newMetadata = await getLatestData(streamer);
-      newLocalData.dcconMetadata[streamer] = formLocalStorageData(newMetadata);
+      newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
+      console.log(streamer, newLocalData.iconMetadata[streamer]);
     }
-
-    console.log(newLocalData);
 
     chrome.storage.local.set(newLocalData, () => {
       console.log(`Refresh done!`);
@@ -108,7 +107,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         makeCallback(async () => {
           const data = await getLatestData(streamer);
-          localData.dcconMetadata[streamer] = formLocalStorageData(data);
+          localData.iconMetadata[streamer] = formLocalStorageData(data);
           console.log(streamer, data);
         }, () => {
           chrome.storage.local.set(localData, () => {
@@ -137,7 +136,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       {
         makeCallback(async () => {
           const data = await getLatestData(streamer);
-          localData.dcconMetadata[streamer] = formLocalStorageData(data);
+          localData.iconMetadata[streamer] = formLocalStorageData(data);
           console.log(streamer, data);
         }, () => {
           chrome.storage.local.set(localData, () => {

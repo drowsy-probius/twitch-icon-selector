@@ -1,21 +1,21 @@
-img.dccon
+img.icon
 {
   width: 100px;
   height: 100px;
   
 }
 
-img.dccon[data-name^="볼트공중"]
+img.icon[data-name^="볼트공중"]
 {
   animation: rotation .5s infinite linear;
 }
 
-img.dccon[data-name^="관짝"]
+img.icon[data-name^="관짝"]
 {
   animation: shake .5s infinite linear;
 }
 
-div.dccon-selector-root
+div.icon-selector-root
 {
   padding: 0 5px;
   position: absolute;
@@ -24,7 +24,7 @@ div.dccon-selector-root
   visibility: hidden;
 }
 
-div.dccon-selector-wrapper
+div.icon-selector-wrapper
 {
   background: lightgray;
   -webkit-border-radius: 5px;
@@ -36,32 +36,32 @@ div.dccon-selector-wrapper
   overflow: auto;
 }
 
-div.dccon-selector-wrapper::-webkit-scrollbar {
+div.icon-selector-wrapper::-webkit-scrollbar {
   width: 10px;
 }
 
-div.dccon-selector-wrapper::-webkit-scrollbar-thumb {
+div.icon-selector-wrapper::-webkit-scrollbar-thumb {
   height: 17%;
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 10px;
 }
 
-div.dccon-selector-wrapper::-webkit-scrollbar-thumb:hover {
+div.icon-selector-wrapper::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 1);
 }
 
-div.dccon-selector-wrapper::-webkit-scrollbar-track {
+div.icon-selector-wrapper::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-div.dccon-list
+div.icon-list
 {
   display: flex;
   flex-wrap: wrap;
   overflow: auto;
 }
 
-img.dccon-item
+img.icon-item
 {
   margin: 5px;
   border-right: 1px solid gray;
@@ -71,7 +71,7 @@ img.dccon-item
   height: 40px;
 }
 
-img.dccon-item:hover
+img.icon-item:hover
 {
   animation: enlarge .2s forwards;
 }
