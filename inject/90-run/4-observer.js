@@ -25,7 +25,13 @@ const run_4_observer = async () => {
   {
     logger.debug("[run_4_observer]");
 
-    return setChatAreaObserver();
+    setChatAreaObserver();
+
+    const chatType = isVod ? "vod" :
+            isPopout ? "popout" :
+            isClip ? "clip" : "live";
+    logger.log(`Loaded! ${watchingStreamer} in ${chatType}`);
+    return true;
   }
   catch(err)
   {

@@ -41,6 +41,7 @@ let iconSelectorCursor = -1;
 let iconSelectorCursorArrowCount = 0;
 
 let imageTippyInstance, thumbnailTippyInstance;
+let inputTippyInstance;
 
 
 /**

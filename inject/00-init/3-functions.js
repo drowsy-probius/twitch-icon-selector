@@ -41,6 +41,7 @@ const resetVariables = () => {
 
   imageTippyInstance = undefined;
   thumbnailTippyInstance = undefined;
+  inputTippyInstance = undefined;
 }
 
 /**
@@ -83,11 +84,13 @@ const getLeafNode = (parent) => {
 const iconFilter = (keyword) => {
   const filteredIcons = [];
   const filteredIconsWithStats = [];
+  keyword = keyword.toLowerCase(); 
   for(const icon of icons)
   {
     let match = false;
     // 키워드 검색
-    for(const key of icon.keywords)
+    const keywords = icon.keywords.map(k => k.toLowerCase())
+    for(const key of keywords)
     {
       if(key.indexOf(keyword) !== -1)
       {
@@ -99,7 +102,8 @@ const iconFilter = (keyword) => {
 
     // 태그검색
     if(match) continue;
-    for(const tag of icon.tags)
+    const tags = icon.tags.map(t => t.toLowerCase());
+    for(const tag of tags)
     {
       if(tag.indexOf(keyword) !== -1)
       {
@@ -126,9 +130,11 @@ const iconFilter = (keyword) => {
  * @returns 
  */
 const iconMatch = (keyword) => {
+  keyword = keyword.toLowerCase();
   for(const icon of icons)
   {
-    if(icon.keywords.includes(keyword))
+    const keywords = icon.keywords.map(k => k.toLowerCase());
+    if(keywords.includes(keyword))
     {
       return icon;
     }

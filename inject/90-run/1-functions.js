@@ -5,8 +5,8 @@
  * @returns 
  */
 const setTippyInstance = (small, destroyOnly=false) => {
-  if(small === true) try { thumbnailTippyInstance.unmount(); thumbnailTippyInstance.destroy(); } catch(e) { }
-  if(small === false) try { imageTippyInstance.unmount(); imageTippyInstance.destroy(); } catch(e) { }
+  if(small === true) try { thumbnailTippyInstance.destroy(); } catch(e) { }
+  if(small === false) try { imageTippyInstance.destroy(); } catch(e) { }
   
   if(destroyOnly === true) return;
 
@@ -14,14 +14,30 @@ const setTippyInstance = (small, destroyOnly=false) => {
     hideOnClick: true,
     placement: "top",
     theme: "twitch",
+    duration: [275, 0],
   });
 
   if(small === false) imageTippyInstance = tippy(".icon", {
     hideOnClick: true,
     placement: "top",
     theme: "twitch",
+    duration: [275, 0],
   });
 }
+
+const setInputTippyInstance = (destroyOnly=false) => {
+  try { inputTippyInstance.destroy(); } catch(e) { } 
+  if(destroyOnly === true) return;
+
+  inputTippyInstance = tippy(inputArea, {
+    content: "",
+    placement: "top",
+    theme: "twitch",
+    trigger: "manual",
+  });
+}
+
+
 
 const chatScrollByOne = () => {
   return document.querySelector(chatScrollSelector)?.scrollBy(0, ICON_HEIGHT);
@@ -37,7 +53,6 @@ const chatScrollByOne = () => {
  */
 const makeStatsFromInput = async (input) => {
   currentChatText = "";
-  // logger.debug("Chat input", input);
   if(typeof(input) !== "string") return;
   const iconNames = input.trimStart().split(" ").filter(t => t.startsWith("~")).filter(t => iconMatch(t.slice(1)) !== false);
   if(iconNames.length === 0) return;
@@ -257,6 +272,8 @@ const chatInputHandler = (e) => {
   if(isInputChanged)
   {
     toggleSelector(true);
+    tippy.hideAll(0);
+    setTippyInstance(true, true);
     constructSelectorItems(keyword.slice(1));
   }
 }
@@ -292,11 +309,22 @@ const chatInputHandlerForArrow = async (e) => {
 
   if(e.key === "ArrowRight")
   {
-    if(iconSelectorCursor >= 0) iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+    if(iconSelectorCursor >= 0)
+    {
+      iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+      iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
+    }
     iconSelectorCursor = (iconSelectorList.children.length === iconSelectorCursor + 1)
-    ? iconSelectorCursor
+    ? 0
     : iconSelectorCursor + 1;
+
     iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+    tippy(iconSelectorList.children[iconSelectorCursor], {
+      hideOnClick: false,
+      placement: "top",
+      theme: "twitch",
+    }).show();
+
     if(iconSelectorCursorArrowCount < 0) iconSelectorCursorArrowCount += 1;
 
     if(iconSelectorCursor >= 0)
@@ -310,9 +338,20 @@ const chatInputHandlerForArrow = async (e) => {
   }
   if(e.key === "ArrowLeft")
   {
-    iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
-    iconSelectorCursor = (iconSelectorCursor <= 0) ? iconSelectorCursor : iconSelectorCursor - 1;
+    if(iconSelectorCursor >= 0)
+    {
+      iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+      iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
+    }
+    iconSelectorCursor = (iconSelectorCursor <= 0) ? iconSelectorList.children.length - 1 : iconSelectorCursor - 1;
+
     iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+    tippy(iconSelectorList.children[iconSelectorCursor], {
+      hideOnClick: false,
+      placement: "top",
+      theme: "twitch",
+    }).show();
+
     iconSelectorCursorArrowCount = Math.max(iconSelectorCursorArrowCount-1, -text.length);
 
     if(iconSelectorCursor >= 0)
@@ -364,14 +403,21 @@ const chatInputHandlerForArrow = async (e) => {
       else 
       {
         /**
-         * 클립보드에 복사만 되는 경우는 
-         * 커서가 끝으로 이동한 경우라서 
-         * 다시 선택기를 보여주지 않음.
+         * 클립보드에 복사
          */
         await navigator.clipboard.writeText(keyword);
+        if(inputTippyInstance)
+        {
+          inputTippyInstance.setContent(`복사됨 ${keyword}`);
+          inputTippyInstance.show();
+          setTimeout(() => {
+            inputTippyInstance.hide();
+          }, 1000);
+        }
       }
       toggleSelector(false);
-      iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+      image.classList.remove("selected");
+      image._tippy && image._tippy.destroy();
       iconSelectorCursor = -1;
       iconSelectorCursorArrowCount = 0;
       return;
@@ -466,6 +512,7 @@ const replaceChatData = (chatDiv) => {
   inputArea.onkeyup = chatInputHandler;
   inputArea.onpaste = chatInputHandler;
   inputArea.onkeydown = chatInputHandlerForArrow;
+  setInputTippyInstance();
 }
 
 
@@ -531,7 +578,6 @@ const iconAreaExists = () => {
     toggleSelector(open);
   }
   
-
   icon.src = `https://twitch-icons.probius.dev/icon?${32}`;
   iconSpace.replaceWith(icon);
   

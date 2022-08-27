@@ -18,7 +18,7 @@ const inputSendButtonSelector = `[data-a-target="chat-send-button"]`;
 const iconAreaSelector = `.chat-input__input-icons`;
 const profileAreaSelector = `[data-a-target="watch-mode-to-home"]`;
 
-const offlineSelector = `.channel-status-info--offline`;
+// const offlineSelector = `.channel-status-info--offline`;
 
 const logger = {
   debug: console.debug.bind(window.console, "[DCCON Selector][DEBUG] "),

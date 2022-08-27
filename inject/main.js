@@ -31,11 +31,6 @@ class Runner{
       if(this.stop) return;
       await this.functions[i]();
     }
-
-    const chatType = isVod ? "vod" :
-                      isPopout ? "popout" :
-                      isClip ? "clip" : "live";
-    logger.log(`Loaded! ${watchingStreamer} in ${chatType}`);
   }
 }
 
