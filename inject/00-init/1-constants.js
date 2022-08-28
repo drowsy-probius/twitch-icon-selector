@@ -3,7 +3,7 @@ const ICON_HEIGHT = 100;
 const THUMBNAIL_HEIGHT = 40;
 
 ////////////////////////////////////////
-// element selectors
+// element selectors for twitch.tv
 
 const rightColumnSelector = `.right-column`;
 
@@ -23,6 +23,29 @@ const iconAreaSelector = `.chat-input__input-icons`;
 const profileAreaSelector = `[data-a-target="watch-mode-to-home"]`;
 
 const offlineSelector = `.channel-status-info--offline`;
+
+////////////////////////////////////////
+// element selectors for tgd.kr
+/**
+ * div 태그 안에 각 문단이 p태그로 감싸져 있음.
+ */
+const articleContentSelector = `#article-content`;
+
+const commentsSelector = `.reply-content`;
+
+const commentInputSelector = `#comment-write-form-area [contenteditable="true"]`;
+
+const commentWriteButtonSelector = `#writeCommentBtn`;
+
+/**
+ * 글쓰기 창
+ * https://tgd.kr/board/write/streamerID
+ */
+const articleInputSelector = `#articleWriteForm [contenteditable="true"]`;
+
+const articleWriteButtonSelector = `#article-write-button`;
+
+
 
 const logger = {
   debug: console.debug.bind(window.console, "[ICON Selector][DEBUG] "),
