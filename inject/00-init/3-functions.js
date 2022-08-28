@@ -126,8 +126,7 @@ const iconFilter = (keyword) => {
 
   for(const icon of filteredIcons)
   {
-    const keyword = `~${icon.keywords[0]}`;
-    filteredIconsWithStats.push([icon, dcconStats[keyword] || 0]);
+    filteredIconsWithStats.push([icon, iconStats[icon.nameHash] || 0]);
   }
   filteredIconsWithStats.sort((a, b) => {
     return b[1] - a[1];
