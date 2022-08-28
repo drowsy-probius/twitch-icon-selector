@@ -61,8 +61,8 @@ const makeStatsFromInput = async (input) => {
   if(!chromeLocalData || chromeLocalData.length === 0) 
   {
     chromeLocalData = await chrome.storage.local.get();
-    iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
   }
+  iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
   
   Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
@@ -72,11 +72,11 @@ const makeStatsFromInput = async (input) => {
       });
     })
   }))
-  .then(data => {
+  .then(async data => {
     const merged = {};
     for(const info of data) merged[info.key] = info.value;
 
-    iconStats = {
+    const newiconStats = {
       ...iconStats,
       ...merged,
     }
@@ -84,14 +84,11 @@ const makeStatsFromInput = async (input) => {
     const updateData = {
       ...chromeLocalData,
     }
-    updateData.iconStats[watchingStreamer] = iconStats;
+    updateData.iconStats[watchingStreamer] = newiconStats;
 
-    chrome.storage.local.set(updateData, () => {
-      logger.debug(`update iconStats`, iconStats);
-      chromeLocalData = {
-        ...updateData
-      }
-    })
+    await chrome.storage.local.set(updateData);
+    chromeLocalData = await chrome.storage.local.get();
+    logger.debug(`update localData`, chromeLocalData);
   })
   .catch(err => {
     logger.error(err);
