@@ -7,6 +7,7 @@ const resetVariables = () => {
   isVod = location.href.indexOf("/videos/") !== -1;;
   isPopout = location.href.indexOf("/popout/") !== -1;;
   isClip = location.href.indexOf("/clip/") !== -1;;
+  isLive = !(isVod && isPopout && isClip);
   watchingStreamer = undefined;
 
   chromeLocalData = {};
@@ -17,10 +18,10 @@ const resetVariables = () => {
   preRenderedIcons.thumbnail = {};
 
   rightColumn = undefined;
+  streamChatArea = undefined;
   chatArea = undefined;
   inputArea = undefined;
   inputAreaParent = undefined;
-  inputAreaContent = undefined;
   inputSendButton = undefined;
   iconArea = undefined;
   profileArea = undefined;
@@ -30,6 +31,9 @@ const resetVariables = () => {
 
   chatAreaObserver && chatAreaObserver.disconnect();
   chatAreaObserver = undefined;
+  streamChatObserver && streamChatObserver.disconnect();
+  streamChatObserver = undefined;
+  isChatHidden = false;
 
   iconSelectorRoot = undefined;
   iconSelectorListWrapper = undefined;
@@ -50,7 +54,7 @@ const resetVariables = () => {
  * @param {*} parent 
  * @returns 
  */
-const waitForElement = (selector, parent) => {
+const waitForElement = (selector, parent, timeout=0) => {
   return new Promise((resolve) => {
     const parentElement = parent ?? document.body;
     if (parentElement.querySelector(selector)) {
@@ -66,6 +70,13 @@ const waitForElement = (selector, parent) => {
       childList: true,
       subtree: true
     });
+    if(timeout > 0)
+    {
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(parentElement.querySelector(selector));
+      }, timeout);
+    }
   });
 }
 
@@ -150,7 +161,11 @@ const iconMatch = (keyword) => {
  * 특정 요소에 의존관계가 없는 함수 선언
  */
 const init_3_functions = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[init_2_variables]`, error);
+    return;
+  }
 
   try 
   {

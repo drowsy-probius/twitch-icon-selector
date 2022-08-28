@@ -7,7 +7,12 @@
  * icons, iconStats 변수를 설정한다. 
  */
 const find_3_streamer = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[find_2_elements]`, error);
+    return;
+  }
+
   try 
   { 
     if(isPopout)
@@ -19,6 +24,9 @@ const find_3_streamer = async () => {
     }
     else if(isVod)
     {
+      /**
+       * https://www.twitch.tv/videos/video_id_numbers
+       */
       watchingStreamer = profileArea.href.split("/").pop().split("?")[0];
     }
     else if(isClip)
@@ -28,7 +36,7 @@ const find_3_streamer = async () => {
        */
       watchingStreamer = location.href.split("twitch.tv/").pop().split("/")[0];
     }
-    else // live
+    else if(isLive) // live
     {
       /**
        * https://www.twitch.tv/streamer?asdf

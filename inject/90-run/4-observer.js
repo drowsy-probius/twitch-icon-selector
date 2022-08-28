@@ -8,6 +8,17 @@ const setChatAreaObserver = () => {
   return chatAreaObserver;
 }
 
+/**
+ * 채팅창 숨기기, popout 감시
+ */
+const setStreamChatObserver = () => {
+  if(!streamChatArea) return;
+  logger.info(`setStreamChatObserver`, streamChatArea);
+  streamChatObserver = new MutationObserver(streamChatObserverHandler);
+  streamChatObserver.observe(streamChatArea, {
+    childList: true,
+  })
+}
 
 ////////////////////////////////////////
 
@@ -17,7 +28,7 @@ const setChatAreaObserver = () => {
 const run_4_observer = async () => {
   if(fail)
   {
-    logger.error(error);
+    logger.info(`[run_3_modify]`, error);
     return;
   }
 
@@ -26,10 +37,12 @@ const run_4_observer = async () => {
     logger.debug("[run_4_observer]");
 
     setChatAreaObserver();
-
+    setStreamChatObserver();
+    
     const chatType = isVod ? "vod" :
             isPopout ? "popout" :
-            isClip ? "clip" : "live";
+            isClip ? "clip" : 
+            isLive ? "live" : "unknown state";
     logger.log(`Loaded! ${watchingStreamer} in ${chatType}`);
     return true;
   }

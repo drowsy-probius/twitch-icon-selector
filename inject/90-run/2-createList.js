@@ -53,7 +53,11 @@
  * icon 목록을 이용해서 미리 img태그를 생성한 뒤 메모리에 기억한다.
  */
 const run_2_createList = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[run_1_functions]`, error);
+    return;
+  }
   
   try 
   {

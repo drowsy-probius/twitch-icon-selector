@@ -431,8 +431,6 @@ const chatInputHandlerForArrow = async (e) => {
 }
 
 
-
-
 ////////////////////
 // from observer
 
@@ -457,8 +455,22 @@ const chatObserverHandler = (mutationList, observer) => {
   setTippyInstance(false, false);
 }
 
-
-
+const streamChatObserverHandler = (mutationList, observer) => {
+  if(isChatHidden)
+  {
+    logger.info(`Chat area is recovered!`);
+    if(runner) runner.stop = true;
+    streamChatObserver && streamChatObserver.disconnect();
+    runner = new Runner(false, 1);
+    isChatHidden = false;
+  }
+  else if(document.querySelector(hiddenChatSelector) !== null)
+  {
+    logger.info(`Chat area is hidden!`);
+    chatAreaObserver && chatAreaObserver.disconnect();
+    isChatHidden = true;
+  }
+}
 
 
 ////////////////////////////////////////
@@ -606,15 +618,17 @@ const chatAreaExists = () => {
   setTippyInstance(false, false);
 }
 
-
-
 ////////////////////////////////////////
 
 /**
  * html 요소와 관련이 큰 함수를 선언한다.
  */
 const run_1_functions = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[find_3_streamer]`, error);
+    return;
+  }
 
   try 
   {

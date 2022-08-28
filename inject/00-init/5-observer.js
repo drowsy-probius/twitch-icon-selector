@@ -34,7 +34,11 @@ const setTitleObserver = () => {
  * title 태그 관찰자 설정
  */
 const init_5_observer = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[init_4_storage]`, error);
+    return;
+  }
 
   try 
   {

@@ -5,7 +5,12 @@
  * vod, popout 여부 확인함
  */
 const find_1_url = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[init_5_observer]`, error);
+    return;
+  }
+
   try 
   {
     logger.debug(`[find_1_url] ${location.href}`);
@@ -18,6 +23,7 @@ const find_1_url = async () => {
     isVod = location.href.indexOf("/videos") !== -1;
     isPopout = location.href.indexOf("/popout/") !== -1;
     isClip = location.href.indexOf("/clip/") !== -1;
+    isLive = !(isVod && isPopout && isClip);
 
     return [lastUrl, isVod, isPopout];
   }

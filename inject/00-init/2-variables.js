@@ -6,6 +6,8 @@ let isWhitelist = false;
 let isVod = false;
 let isPopout = false;
 let isClip = false;
+let isLive = false;
+let isOffline = false;
 let watchingStreamer = "";
 
 let chromeLocalData = {};
@@ -18,9 +20,9 @@ const preRenderedIcons = {
   thumbnail: {},
 }
 
-let rightColumn;
+let rightColumn, streamChatArea;
 let chatArea;
-let inputArea, inputAreaParent, inputAreaContent, inputSendButton;
+let inputArea, inputAreaParent, inputSendButton;
 let iconArea;
 let profileArea;
 
@@ -33,6 +35,8 @@ let lastSearchKeyword;
  *                그것으로 페이지 변경 감시
  */
 let chatAreaObserver, titleObserver;
+let streamChatObserver;
+let isChatHidden = false;
 
 let iconSelectorRoot, iconSelectorListWrapper, iconSelectorList;
 let isSelectorOpen = false;

@@ -5,7 +5,11 @@
  * streamer 목록을 할당함.
  */
 const init_4_storage = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[init_3_functions]`, error);
+    return;
+  }
 
   try 
   {

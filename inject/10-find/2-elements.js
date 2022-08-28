@@ -12,50 +12,64 @@
  * 
  * inputAreaParent - live, popout
  * 
- * inputAreaContent - live, popout
- * 
  * inputSendButton - live, popout
  * 
  * iconArea - live, popout
  * 
  */
 const find_2_elements = async () => {
-  if(fail) return;
+  if(fail)
+  {
+    logger.info(`[find_1_url]`, error);
+    return;
+  }
+
   try 
   {
     if(isPopout)
     {
       logger.debug(`[find_2_elements] popout`);
 
-      chatArea = await waitForElement(`.chat-scrollable-area__message-container`);
-      inputArea = await waitForElement(`[data-a-target="chat-input"]`);
-      inputAreaParent = await waitForElement(`.chat-room__content`);
-      inputAreaContent = getLeafNode(inputArea);
-      inputSendButton = await waitForElement(`[data-a-target="chat-send-button"]`);
-      iconArea = await waitForElement(`.chat-input__input-icons`);
+      chatArea = await waitForElement(chatAreaSelector);
+      inputArea = await waitForElement(inputAreaSelector);
+      inputAreaParent = await waitForElement(inputAreaParentSelector);
+      inputSendButton = await waitForElement(inputSendButtonSelector);
+      iconArea = await waitForElement(iconAreaSelector);
     }
     else if(isVod || isClip)
     {
       logger.debug(`[find_2_elements] ${isVod ? "vod" : "clip"}`);
 
-      rightColumn = await waitForElement(`.right-column`, document.body);
-      profileArea = await waitForElement(`[data-a-target="watch-mode-to-home"]`);
-      chatArea = await waitForElement(`.video-chat__message-list-wrapper ul`, rightColumn);
+      rightColumn = await waitForElement(rightColumnSelector, document.body);
+      profileArea = await waitForElement(profileAreaSelector);
+      chatArea = await waitForElement(chatAreaSelector, rightColumn);
     }
-    else // live
+    else if(isLive)
     {
-      logger.debug("[find_2_elements] live");
+      logger.debug(`[find_2_elements] live`);
 
-      rightColumn = await waitForElement(`.right-column`, document.body);
-      chatArea = await waitForElement(`.chat-scrollable-area__message-container`, rightColumn);
-      inputArea = await waitForElement(`[data-a-target="chat-input"]`, rightColumn);
-      inputAreaParent = await waitForElement(`.chat-room__content`, rightColumn);
-      inputAreaContent = getLeafNode(inputArea);
-      inputSendButton = await waitForElement(`[data-a-target="chat-send-button"]`, rightColumn);
-      iconArea = await waitForElement(`.chat-input__input-icons`, rightColumn);
+      isOffline = (await waitForElement(offlineSelector, document.body, 500) !== null);
+      if(isOffline)
+      {
+        fail = true;
+        error = `Streamer is offline. exiting... ${location.href}`;
+      }
+
+      rightColumn = await waitForElement(rightColumnSelector, document.body);
+      streamChatArea = await waitForElement(streamChatSelector, rightColumn);
+      chatArea = await waitForElement(chatAreaSelector, rightColumn);
+      inputArea = await waitForElement(inputAreaSelector, rightColumn);
+      inputAreaParent = await waitForElement(inputAreaParentSelector, rightColumn);
+      inputSendButton = await waitForElement(inputSendButtonSelector, rightColumn);
+      iconArea = await waitForElement(iconAreaSelector, rightColumn);
+    }
+    else 
+    {
+      fail = true;
+      error = `Unable to find watching type ${location.href}`
     }
 
-    return [rightColumn, chatArea, inputArea, inputAreaParent, inputAreaContent, inputSendButton, iconArea];
+    return [rightColumn, chatArea, inputArea, inputAreaParent, inputSendButton, iconArea];
   }
   catch(err)
   {
