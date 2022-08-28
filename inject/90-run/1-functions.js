@@ -54,8 +54,9 @@ const chatScrollByOne = () => {
 const makeStatsFromInput = async (input) => {
   currentChatText = "";
   if(typeof(input) !== "string") return;
-  const iconNames = input.trimStart().split(" ").filter(t => t.startsWith("~")).filter(t => iconMatch(t.slice(1)) !== false);
-  if(iconNames.length === 0) return;
+  const iconNames = input.trimStart().split(" ").filter(t => t.startsWith("~"));
+  const icons = iconNames.map(t => iconMatch(t.slice(1))).filter(t => t !== false);
+  if(icons.length === 0) return;
 
   if(!chromeLocalData || chromeLocalData.length === 0) 
   {
@@ -63,11 +64,11 @@ const makeStatsFromInput = async (input) => {
     iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
   }
   
-  Promise.all(iconNames.map(iconName => {
+  Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
       resolve({
-        "key": iconName,
-        "value": iconStats[iconName] + 1 || 1
+        "key": icon.nameHash,
+        "value": iconStats[icon.nameHash] + 1 || 1
       });
     })
   }))
