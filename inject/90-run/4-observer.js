@@ -13,7 +13,6 @@ const setChatAreaObserver = () => {
  */
 const setStreamChatObserver = () => {
   if(!streamChatArea) return;
-  logger.info(`setStreamChatObserver`, streamChatArea);
   streamChatObserver = new MutationObserver(streamChatObserverHandler);
   streamChatObserver.observe(streamChatArea, {
     childList: true,

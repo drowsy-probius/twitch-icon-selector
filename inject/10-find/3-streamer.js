@@ -53,7 +53,7 @@ const find_3_streamer = async () => {
     }
     logger.debug(`[find_3_streamer] ${watchingStreamer}`);
   
-    icons = chromeLocalData.iconMetadata[watchingStreamer].data;
+    icons = chromeLocalData.iconMetadata[watchingStreamer].icons;
     iconStats = chromeLocalData.iconStats[watchingStreamer];
 
     logger.info(`[find_3_streamer] loaded total ${icons.length} icons and statistics`, iconStats);

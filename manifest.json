@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "background": {
-    "service_worker": "./background/index.js",
+    "service_worker": "./background.js",
     "type": "module"
   },
   "minimum_chrome_version": "92",
@@ -21,8 +21,7 @@
     "alarms"
   ],
   "action": {
-    "default_title": "디시콘 선택기",
-    "default_popup": "./popup/index.html"
+    "default_title": "디시콘 선택기"
   },
   "content_scripts": [
     {
@@ -51,8 +50,6 @@
         "./inject/90-run/2-createList.js",
         "./inject/90-run/3-modify.js",
         "./inject/90-run/4-observer.js",
-
-
 
         "./inject/main.js"
       ],

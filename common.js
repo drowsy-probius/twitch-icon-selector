@@ -14,7 +14,7 @@ export const DEFAULT_LOCALSTORAGE = {
 
 const apiParser = async (res) => {
   const json = await res.json();
-  return json.icons;
+  return json;
 }
 
 ////////////////////////////////////////////////////////////
@@ -74,8 +74,7 @@ export const getLatestData = async (streamer_id) => {
 
 export const formLocalStorageData = (data) => {
   return {
-    data: data,
-    timestamp: Date.now(),
+    ...data
   }
 }
 
