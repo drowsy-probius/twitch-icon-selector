@@ -11,7 +11,7 @@
 
 ![채팅창 데모](./no_extension/demo_chat.gif)
 
-- 전체 디시콘 목록과 개인 통계를 볼 수 있음. [소스코드 - chrome branch](https://github.com/k123s456h/twitch-icon-frontend) 
+- 전체 아이콘 목록과 개인 통계를 볼 수 있음. [소스코드 - chrome branch](https://github.com/k123s456h/twitch-icon-frontend) 
 
 ![통계창 데모](./no_extension/demo_frontend.gif)
 
