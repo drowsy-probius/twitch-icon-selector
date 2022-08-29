@@ -1,10 +1,10 @@
-export const APP_VERSION = "1.0.0";
-export const DAY_IN_MIN = 24 * 60 * 60;
-export const DAY_IN_MISEC = DAY_IN_MIN * 1000;
-export let STREAMERS = [];
+const APP_VERSION = "1.0.0";
+const DAY_IN_MIN = 24 * 60 * 60;
+const DAY_IN_MISEC = DAY_IN_MIN * 1000;
+let STREAMERS = [];
 const API = "https://twitch-icons.probius.dev"
 
-export const DEFAULT_LOCALSTORAGE = { 
+const DEFAULT_LOCALSTORAGE = { 
   iconMetadata: {},
   iconStats: {},
 }
@@ -25,7 +25,7 @@ const apiParser = async (res) => {
 ////////////////////////////////////////////////////////////
 // 외부
 
-export const makeCallback = (execute, callback) => {
+const makeCallback = (execute, callback) => {
   return new Promise((resolve, reject) => {
     try{ resolve(execute()); } catch(e) { reject(e) }
   })
@@ -34,7 +34,7 @@ export const makeCallback = (execute, callback) => {
   })
 }
 
-export const getStreamerList = async () => {
+const getStreamerList = async () => {
   return fetch(
     `${API}/list?ts=${Date.now()}`,
     {
@@ -56,7 +56,7 @@ export const getStreamerList = async () => {
   })
 }
 
-export const getLatestData = async (streamer_id) => {
+const getLatestData = async (streamer_id) => {
   return fetch(
     `${API}/list/${streamer_id}`,
     {
@@ -72,13 +72,13 @@ export const getLatestData = async (streamer_id) => {
   })
 }
 
-export const formLocalStorageData = (data) => {
+const formLocalStorageData = (data) => {
   return {
     ...data
   }
 }
 
-export const isOutdated = (timestamp) => {
+const isOutdated = (timestamp) => {
   /**
    * 24h = 1000 * 60 * 60 * 24
    */

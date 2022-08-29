@@ -47,7 +47,7 @@ const chatScrollByOne = () => {
 /**
  * 사용자가 입력한 채팅을 읽어서
  * 선택한 아이콘의 통계를 만들어주고
- * chrome.storage.local에 저장함.
+ * browser.storage.local에 저장함.
  * @param {string} input 
  * @returns void
  */
@@ -60,7 +60,7 @@ const makeStatsFromInput = async (input) => {
 
   if(!chromeLocalData || chromeLocalData.length === 0) 
   {
-    chromeLocalData = await chrome.storage.local.get();
+    chromeLocalData = await browser.storage.local.get();
   }
   iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
   
@@ -86,8 +86,8 @@ const makeStatsFromInput = async (input) => {
     }
     updateData.iconStats[watchingStreamer] = newiconStats;
 
-    await chrome.storage.local.set(updateData);
-    chromeLocalData = await chrome.storage.local.get();
+    await browser.storage.local.set(updateData);
+    chromeLocalData = await browser.storage.local.get();
     logger.debug(`update localData`, chromeLocalData);
   })
   .catch(err => {
@@ -571,9 +571,8 @@ const replaceChatData = (chatDiv) => {
 /**
  * iconArea가 존재할 때 호출됨
  */
-const iconAreaExists = () => {
+const iconAreaExists = async () => {
   if(document.getElementById("icon-list-button")) return;
-
   const openSelectorButton = iconArea.lastChild.cloneNode(true);
   const iconSpace = openSelectorButton.querySelector("svg");
   const icon = document.createElement("img");

@@ -1,17 +1,6 @@
-import { 
-  DEFAULT_LOCALSTORAGE, 
-  DAY_IN_MIN, 
-  getStreamerList,
-  getLatestData, 
-  isOutdated, 
-  formLocalStorageData, 
-  makeCallback, 
-} from "./common.js";
-
-
 const onStartup = () =>{
-  chrome.alarms.get('icon-cronjob', (cronjob) => {
-    chrome.alarms.create('icon-cronjob', {
+  browser.alarms.get('icon-cronjob', (cronjob) => {
+    browser.alarms.create('icon-cronjob', {
       when: Date.now() + 2000, // execute after 2s
       periodInMinutes: DAY_IN_MIN,
     })
@@ -23,7 +12,7 @@ const cronjob = async () => {
 
   const streamers = await getStreamerList();
 
-  chrome.storage.local.get(async result => {
+  browser.storage.local.get(async result => {
     console.log(result);
 
     const iconMetadata = result.iconMetadata;
@@ -60,7 +49,7 @@ const cronjob = async () => {
       console.log(streamer, newLocalData.iconMetadata[streamer]);
     }
 
-    chrome.storage.local.set(newLocalData, () => {
+    browser.storage.local.set(newLocalData, () => {
       console.log(`Refresh done!`);
     });
   });
@@ -68,25 +57,25 @@ const cronjob = async () => {
 
 
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set(DEFAULT_LOCALSTORAGE);
+browser.runtime.onInstalled.addListener(() => {
+  browser.storage.local.set(DEFAULT_LOCALSTORAGE);
   console.log(`Hello, Welcome! data installed to your localstorage: `, DEFAULT_LOCALSTORAGE);
   onStartup();
 });
 
-chrome.runtime.onStartup.addListener(() => {
+browser.runtime.onStartup.addListener(() => {
   onStartup();
   console.log(`Hello, Welcome Again!`);
 });
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+browser.alarms.onAlarm.addListener((alarm) => {
   console.log('alarms.onAlarm --'
               + ' name: '          + alarm.name
               + ' scheduledTime: ' + alarm.scheduledTime);
   cronjob();  
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('runtime.onMessage -- ' + 
     ("tab" in sender ?
     "from a content script:" + sender.tab.url :
@@ -100,7 +89,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       let localData;
 
 
-      chrome.storage.local.get((data) => {
+      browser.storage.local.get((data) => {
         localData = {
           ...data
         };
@@ -110,7 +99,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           localData.iconMetadata[streamer] = formLocalStorageData(data);
           console.log(streamer, data);
         }, () => {
-          chrome.storage.local.set(localData, () => {
+          browser.storage.local.set(localData, () => {
             console.log(`Refresh ${streamer} done!`);
             return sendResponse({result: true});
           });
@@ -126,7 +115,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   else if(request.command === "refresh_all")
   {
     let localData;
-    chrome.storage.local.get(async (data) => {
+    browser.storage.local.get(async (data) => {
       localData = {
         ...data
       };
@@ -139,7 +128,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           localData.iconMetadata[streamer] = formLocalStorageData(data);
           console.log(streamer, data);
         }, () => {
-          chrome.storage.local.set(localData, () => {
+          browser.storage.local.set(localData, () => {
             console.log(`Refresh ${streamer} done!`);
             return sendResponse({result: true});
           });
@@ -149,6 +138,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-chrome.action.onClicked.addListener(async () => {
-  await chrome.tabs.create({url: chrome.runtime.getURL("./popup/index.html")});
+browser.browserAction.onClicked.addListener(async () => {
+  await browser.tabs.create({url: browser.runtime.getURL("./popup/index.html")});
 });
