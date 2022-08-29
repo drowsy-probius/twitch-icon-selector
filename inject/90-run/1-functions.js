@@ -187,14 +187,8 @@ const iconClickHandler = async (e) => {
      * 바로 적용
      */
     const slicedKeyword = keyword.slice(currentInput.length);
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${slicedKeyword} `);
-    const event = new ClipboardEvent("paste", {
-      clipboardData: dataTransfer,
-      bubbles: true,
-    });
-    inputArea.dispatchEvent(event);
-    currentChatText = currentChatText + slicedKeyword;
+    const eventRet = document.execCommand("insertText", false, `${slicedKeyword} `);
+    if(eventRet) currentChatText = currentChatText + slicedKeyword + " ";
   }
   await navigator.clipboard.writeText(keyword);
   toggleSelector(false);
@@ -212,14 +206,8 @@ const iconClickHandlerInChat = async (e) => {
   if(!isVod) 
   {
     inputArea.focus();
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${keyword} `);
-    const event = new ClipboardEvent("paste", {
-      clipboardData: dataTransfer,
-      bubbles: true,
-    });
-    inputArea.dispatchEvent(event);
-    currentChatText = keyword;
+    const eventRet = document.execCommand("insertText", false, `${keyword} `);
+    if(eventRet) currentChatText = keyword;
   }
 
   await navigator.clipboard.writeText(keyword);
@@ -389,13 +377,6 @@ const chatInputHandlerForArrow = async (e) => {
       if(doPaste && isPrefix)
       {
         const slicedKeyword = keyword.slice(currentInput.length);
-        // const dataTransfer = new DataTransfer();
-        // dataTransfer.setData("text", `${slicedKeyword} `);
-        // const event = new ClipboardEvent("paste", { 
-        //   clipboardData: dataTransfer,
-        //   bubbles: true,
-        // });
-        // const eventRet = inputArea.dispatchEvent(event);
         const eventRet = document.execCommand("insertText", false, `${slicedKeyword} `);
         if(eventRet) currentChatText = currentChatText + slicedKeyword + " ";
       }
