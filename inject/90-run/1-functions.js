@@ -389,14 +389,15 @@ const chatInputHandlerForArrow = async (e) => {
       if(doPaste && isPrefix)
       {
         const slicedKeyword = keyword.slice(currentInput.length);
-        const dataTransfer = new DataTransfer();
-        dataTransfer.setData("text", `${slicedKeyword} `);
-        const event = new ClipboardEvent("paste", { 
-          clipboardData: dataTransfer,
-          bubbles: true,
-        });
-        inputArea.dispatchEvent(event);
-        currentChatText = currentChatText + slicedKeyword + " ";
+        // const dataTransfer = new DataTransfer();
+        // dataTransfer.setData("text", `${slicedKeyword} `);
+        // const event = new ClipboardEvent("paste", { 
+        //   clipboardData: dataTransfer,
+        //   bubbles: true,
+        // });
+        // const eventRet = inputArea.dispatchEvent(event);
+        const eventRet = document.execCommand("insertText", false, `${slicedKeyword} `);
+        if(eventRet) currentChatText = currentChatText + slicedKeyword + " ";
       }
       else 
       {

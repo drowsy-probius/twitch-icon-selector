@@ -16,7 +16,9 @@
 
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "clipboardRead",
+    "clipboardWrite"
   ],
   "browser_action": {
     "default_title": "트위치 아이콘 선택기"
