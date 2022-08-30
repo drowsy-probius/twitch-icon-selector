@@ -4,8 +4,7 @@
   "version": "1.0.1",
   "manifest_version": 3,
   "background": {
-    "service_worker": "./background.js",
-    "type": "module"
+    "service_worker": "./background.js"
   },
   "minimum_chrome_version": "92",
 
@@ -17,8 +16,7 @@
   },
 
   "permissions": [
-    "storage",
-    "alarms"
+    "storage"
   ],
   "action": {
     "default_title": "트위치 아이콘 선택기",
