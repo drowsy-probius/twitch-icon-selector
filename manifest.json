@@ -21,7 +21,8 @@
     "alarms"
   ],
   "action": {
-    "default_title": "트위치 아이콘 선택기"
+    "default_title": "트위치 아이콘 선택기",
+    "default_popup": "./setting/index.html"
   },
   "content_scripts": [
     {

@@ -17,7 +17,7 @@ const setTippyInstance = (small, destroyOnly=false) => {
     duration: [275, 0],
   });
 
-  if(small === false) imageTippyInstance = tippy(".icon", {
+  if(small === false) imageTippyInstance = tippy(".icon, .icon-small, .icon-emoji", {
     hideOnClick: true,
     placement: "top",
     theme: "twitch",
@@ -40,7 +40,20 @@ const setInputTippyInstance = (destroyOnly=false) => {
 
 
 const chatScrollByOne = () => {
-  return document.querySelector(chatScrollSelector)?.scrollBy(0, ICON_HEIGHT);
+  let scrollHeight = 100;
+  if(iconRenderOptions.type === 0)
+  {
+    scrollHeight = 100;
+  }
+  else if(iconRenderOptions.type === 1)
+  {
+    scrollHeight = 70;
+  }
+  else if(iconRenderOptions.type === 2)
+  {
+    scrollHeight = 0;
+  }
+  return document.querySelector(chatScrollSelector)?.scrollBy(0, scrollHeight);
 }
 
 
@@ -484,9 +497,14 @@ const replaceChatData = (chatDiv) => {
   const parent = chatDiv.parentElement;
   const text = chatDiv.innerText;
 
+  /**
+   * 하나의 채팅에 하나만 렌더링 되도록 설정
+   */
+  let isOneReplaced = false;
+
   chatDiv.innerText = "";
   text.split(" ").forEach((token, index, arr) => {
-    if(token.startsWith('~'))
+    if(!isOneReplaced && token.startsWith('~'))
     {
       const keyword = token.slice(1);
       const icon = iconMatch(keyword);
@@ -494,10 +512,28 @@ const replaceChatData = (chatDiv) => {
       {
         const img = preRenderedIcons.image[icon.nameHash].cloneNode();
         img.onclick = iconClickHandlerInChat;
-        parent.appendChild(document.createElement("br"));
-        parent.appendChild(img);
-        parent.appendChild(document.createElement("br"));
+
+        if(iconRenderOptions.type === 0)
+        {
+          const span = document.createElement("span");
+          span.classList.add("newline");
+          span.appendChild(img);
+          parent.appendChild(span);
+        }
+        else if(iconRenderOptions.type === 1)
+        {
+          const span = document.createElement("span");
+          span.classList.add("newline");
+          span.appendChild(img);
+          parent.appendChild(span);
+        }
+        else if(iconRenderOptions.type === 2)
+        {
+          parent.appendChild(img);
+        }
+
         chatScrollByOne();
+        if(iconRenderOptions.type !== 2) isOneReplaced = true;
         return;
       }
     }

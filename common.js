@@ -7,6 +7,10 @@ const API = "https://twitch-icons.probius.dev"
 export const DEFAULT_LOCALSTORAGE = { 
   iconMetadata: {},
   iconStats: {},
+  iconRenderOptions: {
+    type: 0,
+    
+  }
 }
 
 ////////////////////////////////////////////////////////////

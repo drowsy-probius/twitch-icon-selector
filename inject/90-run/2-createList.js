@@ -7,10 +7,21 @@
   await Promise.all(icons.map(icon => {
     return new Promise((resolve, reject) => {
       const iconImage = document.createElement("img");
-      iconImage.classList.add("icon");
+      if(iconRenderOptions.type === 0)
+      {
+        iconImage.classList.add("icon");
+      }
+      else if(iconRenderOptions.type === 1)
+      {
+        iconImage.classList.add("icon-small");
+      }
+      else if(iconRenderOptions.type === 2)
+      {
+        iconImage.classList.add("icon-emoji");
+      }
       iconImage.src = icon.uri;
       iconImage.alt = `~${icon.keywords[0]}`;
-      iconImage.height = `${ICON_HEIGHT}px`;
+      iconImage.height = `${0}px`;
       iconImage.onerror = `this.onerror=null; this.src="${icon.originUri}";`;
       iconImage.setAttribute("data-uri", icon.uri);
       iconImage.setAttribute("data-hash", icon.nameHash);
@@ -28,7 +39,7 @@
       iconThumbnail.classList.add("icon-item");
       iconThumbnail.src = icon.thumbnailUri;
       iconThumbnail.alt = `~${icon.keywords[0]}`;
-      iconThumbnail.height = `${THUMBNAIL_HEIGHT}px`;
+      iconThumbnail.height = `${0}px`;
       iconThumbnail.onerror = `this.onerror=null; this.src="${icon.originUri}";`;
       iconThumbnail.setAttribute("data-uri", icon.thumbnailUri);
       iconThumbnail.setAttribute("data-hash", icon.nameHash);

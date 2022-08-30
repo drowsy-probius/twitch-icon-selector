@@ -1,6 +1,4 @@
 const SELECTOR_HEIGHT = 200;
-const ICON_HEIGHT = 100;
-const THUMBNAIL_HEIGHT = 40;
 
 ////////////////////////////////////////
 // element selectors

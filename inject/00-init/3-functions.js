@@ -14,6 +14,9 @@ const resetVariables = () => {
   icons = [];
   streamers = [];
   dcconStats = {};
+  iconRenderOptions = {
+    type: 0,
+  };
   preRenderedIcons.image = {};
   preRenderedIcons.thumbnail = {};
 
