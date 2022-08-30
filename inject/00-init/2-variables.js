@@ -14,6 +14,15 @@ let chromeLocalData = {};
 let icons = [];
 let streamers = [];
 let iconStats = {};
+let iconRenderOptions = {
+  /**
+   * 0: default (100, 100)
+   * 1: small (70, 70)
+   * 2: emoji (28, 28) and inline (no render limit)
+   */
+  type: 0,
+}
+
 
 const preRenderedIcons = {
   image: {},

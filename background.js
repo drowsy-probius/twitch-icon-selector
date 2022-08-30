@@ -1,11 +1,87 @@
-const onStartup = () =>{
-  browser.alarms.get('icon-cronjob', (cronjob) => {
-    browser.alarms.create('icon-cronjob', {
-      when: Date.now() + 2000, // execute after 2s
-      periodInMinutes: DAY_IN_MIN,
-    })
-  });
+const APP_VERSION = "1.0.0";
+const DAY_IN_MIN = 24 * 60 * 60;
+const DAY_IN_MISEC = DAY_IN_MIN * 1000;
+let STREAMERS = [];
+const API = "https://twitch-icons.probius.dev"
+
+const DEFAULT_LOCALSTORAGE = { 
+  iconMetadata: {},
+  iconStats: {},
+  iconRenderOptions: {
+    type: 0,
+  }
 }
+
+////////////////////////////////////////////////////////////
+// 파서
+
+const apiParser = async (res) => {
+  const json = await res.json();
+  return json;
+}
+
+////////////////////////////////////////////////////////////
+// 내부
+
+
+
+////////////////////////////////////////////////////////////
+// 외부
+
+const makeCallback = (execute, callback) => {
+  return new Promise((resolve, reject) => {
+    try{ resolve(execute()); } catch(e) { reject(e) }
+  })
+  .then(_ => {
+    callback();
+  })
+}
+
+const getStreamerList = async () => {
+  return fetch(
+    `${API}/list?ts=${Date.now()}`,
+    {
+      method: "get",
+      headers: {"Content-Type": "application/json"}
+    }
+  )
+  .then(async res => {
+    const json = await res.json();
+    STREAMERS = [];
+    for(const item of json)
+    {
+      STREAMERS.push(item.name)
+    }
+    return STREAMERS;
+  })
+  .catch(async e => {
+    throw e;
+  })
+}
+
+const getLatestData = async (streamer_id, timestamp=0) => {
+  return fetch(
+    `${API}/list/${streamer_id}?ts=${timestamp}`,
+    {
+      method: "get",
+      headers: {"Content-Type": "application/json"}
+    }
+  )
+  .then(async res => {
+    return await apiParser(res);
+  })
+  .catch(async e => {
+    throw e;
+  })
+}
+
+const formLocalStorageData = (data) => {
+  return {
+    ...data
+  }
+}
+
+///////////////////////////////////////////
 
 const cronjob = async () => {
   console.log(`Execute refresh job!`);
@@ -13,8 +89,6 @@ const cronjob = async () => {
   const streamers = await getStreamerList();
 
   browser.storage.local.get(async result => {
-    console.log(result);
-
     const iconMetadata = result.iconMetadata;
     const iconStats = result.iconStats;
     const newLocalData = {
@@ -23,36 +97,28 @@ const cronjob = async () => {
 
     for(const streamer of streamers)
     {
-      let hasData = (streamer in iconMetadata);
       let hasStatsData = (streamer in iconStats);
-      let isDataOutdated = true;
-      
-      if(hasData)
-      {
-        const metadata = iconMetadata[streamer];
-        isDataOutdated = (metadata.length === 0 || isOutdated(metadata["timestamp"]))
-      }
+      const timestamp = iconMetadata[streamer] ? iconMetadata[streamer].timestamp : 0;
 
       if(!hasStatsData)
       {
         newLocalData.iconStats[streamer] = {};
       }
 
-      if(!isDataOutdated)
+      const newMetadata = await getLatestData(streamer, timestamp);
+      if(newMetadata.status === false)
       {
-        console.log(`${streamer}'s data is not outdated. do not refresh...`);
-        return;
+        console.log(streamer, newMetadata.message);
+        continue;
       }
-
-      const newMetadata = await getLatestData(streamer);
       newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
-      console.log(streamer, newLocalData.iconMetadata[streamer]);
     }
 
     browser.storage.local.set(newLocalData, () => {
-      console.log(`Refresh done!`);
+      console.log(`Refresh done!`, newLocalData);
     });
   });
+  return;
 }
 
 
@@ -60,19 +126,12 @@ const cronjob = async () => {
 browser.runtime.onInstalled.addListener(() => {
   browser.storage.local.set(DEFAULT_LOCALSTORAGE);
   console.log(`Hello, Welcome! data installed to your localstorage: `, DEFAULT_LOCALSTORAGE);
-  onStartup();
+  cronjob();
 });
 
 browser.runtime.onStartup.addListener(() => {
-  onStartup();
+  cronjob();
   console.log(`Hello, Welcome Again!`);
-});
-
-browser.alarms.onAlarm.addListener((alarm) => {
-  console.log('alarms.onAlarm --'
-              + ' name: '          + alarm.name
-              + ' scheduledTime: ' + alarm.scheduledTime);
-  cronjob();  
 });
 
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -81,63 +140,14 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     "from a content script:" + sender.tab.url :
     "from the extension"));
 
-  if (request.command === "refresh")
+  if(request.command === "refresh_all")
   {
-    try
-    {
-      const streamer = request.streamer;
-      let localData;
-
-
-      browser.storage.local.get((data) => {
-        localData = {
-          ...data
-        };
-
-        makeCallback(async () => {
-          const data = await getLatestData(streamer);
-          localData.iconMetadata[streamer] = formLocalStorageData(data);
-          console.log(streamer, data);
-        }, () => {
-          browser.storage.local.set(localData, () => {
-            console.log(`Refresh ${streamer} done!`);
-            return sendResponse({result: true});
-          });
-        });
-      });
-    }
-    catch(e)
-    {
-      console.error(e);
-      return sendResponse({result: false});
-    }
+    cronjob()
+    .then(() => {
+      return sendResponse({result: true});
+    })
+    .catch(err => {
+      console.error(err);
+    })
   }
-  else if(request.command === "refresh_all")
-  {
-    let localData;
-    browser.storage.local.get(async (data) => {
-      localData = {
-        ...data
-      };
-      
-      const streamers = await getStreamerList();
-      for(const streamer of streamers)
-      {
-        makeCallback(async () => {
-          const data = await getLatestData(streamer);
-          localData.iconMetadata[streamer] = formLocalStorageData(data);
-          console.log(streamer, data);
-        }, () => {
-          browser.storage.local.set(localData, () => {
-            console.log(`Refresh ${streamer} done!`);
-            return sendResponse({result: true});
-          });
-        });
-      }
-    });
-  }
-});
-
-browser.browserAction.onClicked.addListener(async () => {
-  await browser.tabs.create({url: browser.runtime.getURL("./popup/index.html")});
 });

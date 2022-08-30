@@ -1,8 +1,28 @@
+span.newline::before
+{
+  content: "\a";
+  white-space: pre;
+}
+span.newline::after
+{
+  content: "\a";
+  white-space: pre;
+}
+
 img.icon
 {
   width: 100px;
   height: 100px;
-  
+}
+img.icon-small
+{
+  width: 70px;
+  height: 70px;
+}
+img.icon-emoji
+{
+  width: 28px;
+  height: 28px;
 }
 
 img.icon[data-name^="볼트공중"]

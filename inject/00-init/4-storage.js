@@ -16,7 +16,9 @@ const init_4_storage = async () => {
     logger.debug("[init_4_storage]");
 
     chromeLocalData = await browser.storage.local.get();
+    iconRenderOptions = chromeLocalData.iconRenderOptions;
     streamers = Object.keys(chromeLocalData.iconMetadata);
+    logger.debug("[init_4_storage]", streamers, iconRenderOptions);
     return streamers;
   }
   catch(err)

@@ -1,0 +1,62 @@
+body
+{
+  width: 200px;
+  height: 150px;
+  background-color: #354c63;
+  color: antiquewhite;
+}
+
+main.main
+{
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 6fr 1fr;
+  grid-template-rows: 1fr 2fr 1fr 1fr;
+  grid-template-areas: 
+    " . . . "
+    " . options . "
+    " . . . "
+    " . buttons . "
+  ;
+}
+
+div.options
+{
+  grid-area: options;
+  display: flex;
+}
+
+div.type-selector
+{
+  display: flex;
+}
+
+div.type-selector div 
+{
+  margin-right: 10px;
+}
+
+div.buttons
+{
+  grid-area: buttons;
+  justify-self: center;
+}
+
+button
+{
+  margin-left: -3px;
+  margin-right: -3px;
+
+  border: 1px solid skyblue;
+  background-color: rgba(0, 0, 0, 0);
+  color: skyblue;
+  padding: 5px;
+
+  border-radius: 5px;
+
+}
+button:hover
+{
+  color: white;
+  background-color: skyblue;
+}
