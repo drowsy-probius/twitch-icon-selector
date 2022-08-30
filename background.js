@@ -82,14 +82,6 @@ const formLocalStorageData = (data) => {
   }
 }
 
-const isOutdated = (timestamp) => {
-  /**
-   * 24h = 1000 * 60 * 60 * 24
-   */
-  return (Date.now() - timestamp) > DAY_IN_MISEC;
-}
-
-
 ///////////////////////////////////////////////////
 
 const cronjob = async () => {
