@@ -10,7 +10,10 @@ const streamChatSelector = `.stream-chat`;
 const hiddenChatSelector = `[data-test-selector="stream-chat-hidden-state"]`;
 
 const chatAreaSelector = `.video-chat__message-list-wrapper ul, .chat-scrollable-area__message-container`;
-const chatScrollSelector = `div[data-a-target='chat-scroller'] .simplebar-scroll-content`
+const chatScrollSelector = `div[data-a-target='chat-scroller'] .simplebar-scroll-content`;
+
+const chatBodySelector = `[data-test-selector="chat-line-message-body"]`;
+const chatTextSelector = `.text-fragment`;
 
 const inputAreaSelector = `[data-a-target="chat-input"]`;
 const inputAreaParentSelector = `.chat-room__content`;

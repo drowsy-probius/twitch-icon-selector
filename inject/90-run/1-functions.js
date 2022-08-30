@@ -440,7 +440,7 @@ const chatObserverHandler = (mutationList, observer) => {
     const children = record.addedNodes;
     for(const child of children)
     {
-      child.querySelectorAll(".text-fragment").forEach(chatDiv => {
+      child.querySelectorAll(chatBodySelector).forEach(chatDiv => {
         replaceChatData(chatDiv);
       });
     }
@@ -473,63 +473,93 @@ const streamChatObserverHandler = (mutationList, observer) => {
 /**
  * 채팅 하나에 대해서 관련된
  * 아이콘이 있으면 아이콘으로 바꿈
- * @param {Element} chatDiv 
+ * @param {Element} chatBody 
  */
- const replaceChatData = (chatDiv) => {
-  const parent = chatDiv.parentElement;
-  const text = chatDiv.innerText;
+ const replaceChatData = (chatBody) => {
+  const oldFragments = chatBody.children;
+  const newFragments = [];
 
-  /**
-   * 하나의 채팅에 하나만 렌더링 되도록 설정
-   */
   let isOneReplaced = false;
-
-  chatDiv.innerText = "";
-  text.split(" ").forEach((token, index, arr) => {
-    if(!isOneReplaced && token.startsWith('~'))
+  for(let i=0; i<oldFragments.length; i++)
+  {
+    const fragment = oldFragments[i];
+    if(fragment.classList.contains("text-fragment"))
     {
-      const keyword = token.slice(1);
-      const icon = iconMatch(keyword);
-      if(icon)
+      const tokens = fragment.innerText.split(" ");
+      let nonIconStartIdx = 0;
+      let tokenidx;
+      for(tokenidx=0; tokenidx < tokens.length; tokenidx++)
       {
-        const img = preRenderedIcons.image[icon.nameHash].cloneNode();
-        img.onclick = iconClickHandlerInChat;
+        const token = tokens[tokenidx];
+        if(!isOneReplaced && token.startsWith("~"))
+        {
+          const keyword = token.slice(1);
+          const icon = iconMatch(keyword);
+          if(icon)
+          {
+            /**
+             * 아이콘 매치 이전까지의 텍스트를 하나의 .text-fragment로 추가함
+             */
+            const txt = document.createElement("span");
+            txt.classList.add("text-fragment");
+            txt.setAttribute("data-a-target", "chat-message-text");
+            txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
+            newFragments.push(txt);
+            /**
+             * 현재 인덱스는 아이콘이므로 
+             * +1 한 것을 할당해야함. 
+             */
+            nonIconStartIdx = tokenidx + 1;
 
-        if(iconRenderOptions.type === 0)
-        {
-          const span = document.createElement("span");
-          span.classList.add("newline");
-          span.appendChild(img);
-          parent.appendChild(span);
+            /**
+             * 아이콘 요소 생성함
+             */
+             const img = preRenderedIcons.image[icon.nameHash].cloneNode();
+             img.onclick = iconClickHandlerInChat;
+     
+             if(iconRenderOptions.type === 0)
+             {
+               const span = document.createElement("span");
+               span.classList.add("newline");
+               span.appendChild(img);
+               newFragments.push(span);
+             }
+             else if(iconRenderOptions.type === 1)
+             {
+               const span = document.createElement("span");
+               span.classList.add("newline");
+               span.appendChild(img);
+               newFragments.push(span);
+             }
+             else if(iconRenderOptions.type === 2)
+             {
+               newFragments.push(img);
+             }
+     
+             chatScrollByOne();
+             if(iconRenderOptions.type !== 2) isOneReplaced = true;
+          }
         }
-        else if(iconRenderOptions.type === 1)
-        {
-          const span = document.createElement("span");
-          span.classList.add("newline");
-          span.appendChild(img);
-          parent.appendChild(span);
-        }
-        else if(iconRenderOptions.type === 2)
-        {
-          parent.appendChild(img);
-        }
-
-        chatScrollByOne();
-        if(iconRenderOptions.type !== 2) isOneReplaced = true;
-        return;
+      }
+      /**
+       * 토큰 목록 순회한 뒤에
+       * 매치된 아이콘이 없었으면 그냥 텍스트 요소로 추가
+       */
+      if(nonIconStartIdx < tokenidx)
+      {
+        const txt = document.createElement("span");
+        txt.classList.add("text-fragment");
+        txt.setAttribute("data-a-target", "chat-message-text");
+        txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
+        newFragments.push(txt);
       }
     }
-
-    const txt = document.createElement("span");
-    txt.classList.add("text-fragment");
-    txt.setAttribute("data-a-target", "chat-message-text");
-    txt.innerText = token;
-    if(index < arr.length - 1)
+    else 
     {
-      txt.innerText += " ";
+      newFragments.push(fragment);
     }
-    parent.appendChild(txt);
-  });
+  }
+  chatBody.replaceChildren(...newFragments);
 }
 
 
@@ -627,7 +657,7 @@ const inputSendButtonExists = () => {
  * chatArea가 존재할 때 호출됨
  */
 const chatAreaExists = () => {
-  chatArea.querySelectorAll(".text-fragment").forEach(chatDiv => {
+  chatArea.querySelectorAll(chatBodySelector).forEach(chatDiv => {
     replaceChatData(chatDiv);
   });
   setTippyInstance(false, false);
