@@ -1,12 +1,10 @@
-span.newline::before
+span.newline
 {
-  content: "\a";
-  white-space: pre;
-}
-span.newline::after
-{
-  content: "\a";
-  white-space: pre;
+  /**
+  크게 (.icon), 작게 (.icon-small) 이미지가 담김.
+  한 줄에 하나의 이미지만 표현하도록 함.
+  */
+  display: block;
 }
 
 img.icon
