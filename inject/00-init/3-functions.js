@@ -26,6 +26,7 @@ const resetVariables = () => {
   inputArea = undefined;
   inputAreaParent = undefined;
   inputSendButton = undefined;
+  iconSelectorPosition = undefined;
   iconArea = undefined;
   profileArea = undefined;
 
@@ -154,8 +155,6 @@ const iconMatch = (keyword) => {
   }
   return false;
 }
-
-
 
 ////////////////////////////////////////
 

@@ -92,8 +92,11 @@ const toggleSelector = (open) => {
 
   if(open === true)
   {
-    const chatPos = inputArea.getBoundingClientRect();
-    iconSelectorRoot.style.bottom = `${chatPos.height + 60}px`;
+    /**
+     * 슬로우 모드에서도 적절한 위치에 보여줌.
+     */
+    const chatPos = document.querySelector(iconSelectorPositionSelector).getBoundingClientRect();
+    iconSelectorRoot.style.bottom = `${chatPos.height + 5}px`;
 
     iconSelectorRoot.classList.remove("hide");
     iconSelectorRoot.classList.add("show");
@@ -280,7 +283,7 @@ const chatInputHandlerForArrow = async (e) => {
 
   if(e.key === "ArrowRight")
   {
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
       iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
       iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
@@ -288,18 +291,17 @@ const chatInputHandlerForArrow = async (e) => {
     iconSelectorCursor = (iconSelectorList.children.length === iconSelectorCursor + 1)
     ? 0
     : iconSelectorCursor + 1;
-
-    iconSelectorList.children[iconSelectorCursor].classList.add("selected");
-    tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: true,
-      placement: "top",
-      theme: "twitch",
-    }).show();
-
     if(iconSelectorCursorArrowCount < 0) iconSelectorCursorArrowCount += 1;
 
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
+      iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+      tippy(iconSelectorList.children[iconSelectorCursor], {
+        hideOnClick: true,
+        placement: "top",
+        theme: "twitch",
+      }).show();
+
       const imagePos = iconSelectorList.children[iconSelectorCursor].getBoundingClientRect();
       const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
       const scrollAmount = imagePos.y - selectorPos.y - 5;
@@ -309,24 +311,23 @@ const chatInputHandlerForArrow = async (e) => {
   }
   if(e.key === "ArrowLeft")
   {
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
       iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
       iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
     }
     iconSelectorCursor = (iconSelectorCursor <= 0) ? iconSelectorList.children.length - 1 : iconSelectorCursor - 1;
-
-    iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.add("selected");
-    tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: true,
-      placement: "top",
-      theme: "twitch",
-    }).show();
-
     iconSelectorCursorArrowCount = Math.max(iconSelectorCursorArrowCount-1, -text.length);
 
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
+      iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+      tippy(iconSelectorList.children[iconSelectorCursor], {
+        hideOnClick: true,
+        placement: "top",
+        theme: "twitch",
+      }).show();
+
       const imagePos = iconSelectorList.children[iconSelectorCursor].getBoundingClientRect();
       const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
       const scrollAmount = imagePos.y - selectorPos.y - 5;
@@ -397,7 +398,7 @@ const chatInputHandlerForArrow = async (e) => {
   /**
    * 이 부분은 특수 키가 아닐 때만 실행됨 => 변수 초기화
    */
-  iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+  iconSelectorList.children[iconSelectorCursor] && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
   iconSelectorCursor = -1;
 }
 
@@ -446,7 +447,6 @@ const streamChatObserverHandler = (mutationList, observer) => {
 ////////////////////////////////////////
 // element 수정
 
-
 /**
  * 채팅 하나에 대해서 관련된
  * 아이콘이 있으면 아이콘으로 바꿈
@@ -480,7 +480,7 @@ const replaceChatData = (chatBody) => {
             const txt = document.createElement("span");
             txt.classList.add("text-fragment");
             txt.setAttribute("data-a-target", "chat-message-text");
-            txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
+            txt.replaceChildren(tokens.slice(nonIconStartIdx, tokenidx).join(" "))
             newFragments.push(txt);
             /**
              * 현재 인덱스는 아이콘이므로

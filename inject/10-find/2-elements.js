@@ -34,6 +34,7 @@ const find_2_elements = async () => {
       inputArea = await waitForElement(inputAreaSelector);
       inputAreaParent = await waitForElement(inputAreaParentSelector);
       inputSendButton = await waitForElement(inputSendButtonSelector);
+      iconSelectorPosition = await waitForElement(iconSelectorPositionSelector);
       iconArea = await waitForElement(iconAreaSelector);
     }
     else if(isVod || isClip)
@@ -61,6 +62,7 @@ const find_2_elements = async () => {
       inputArea = await waitForElement(inputAreaSelector, rightColumn);
       inputAreaParent = await waitForElement(inputAreaParentSelector, rightColumn);
       inputSendButton = await waitForElement(inputSendButtonSelector, rightColumn);
+      iconSelectorPosition = await waitForElement(iconSelectorPositionSelector, rightColumn);
       iconArea = await waitForElement(iconAreaSelector, rightColumn);
     }
     else 
