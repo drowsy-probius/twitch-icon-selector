@@ -1,32 +1,5 @@
-/**
- * tippy 객체 설정 (마우스 올려놓았을 때 팝업)
- * @param {*} small 
- * @param {*} destroyOnly 
- * @returns 
- */
-const setTippyInstance = (small, destroyOnly=false) => {
-  if(small === true) try { thumbnailTippyInstance.destroy(); } catch(e) { }
-  if(small === false) try { imageTippyInstance.destroy(); } catch(e) { }
-  
-  if(destroyOnly === true) return;
-
-  if(small === true) thumbnailTippyInstance = tippy(".icon-item", {
-    hideOnClick: true,
-    placement: "top",
-    theme: "twitch",
-    duration: [275, 0],
-  });
-
-  if(small === false) imageTippyInstance = tippy(".icon, .icon-small, .icon-emoji", {
-    hideOnClick: true,
-    placement: "top",
-    theme: "twitch",
-    duration: [275, 0],
-  });
-}
-
 const setInputTippyInstance = (destroyOnly=false) => {
-  try { inputTippyInstance.destroy(); } catch(e) { } 
+  try { inputTippyInstance.destroy(); } catch(e) { }
   if(destroyOnly === true) return;
 
   inputTippyInstance = tippy(inputArea, {
@@ -36,7 +9,6 @@ const setInputTippyInstance = (destroyOnly=false) => {
     trigger: "manual",
   });
 }
-
 
 
 const chatScrollByOne = () => {
@@ -61,7 +33,7 @@ const chatScrollByOne = () => {
  * 사용자가 입력한 채팅을 읽어서
  * 선택한 아이콘의 통계를 만들어주고
  * chrome.storage.local에 저장함.
- * @param {string} input 
+ * @param {string} input
  * @returns void
  */
 const makeStatsFromInput = async (input) => {
@@ -71,12 +43,12 @@ const makeStatsFromInput = async (input) => {
   const icons = iconNames.map(t => iconMatch(t.slice(1))).filter(t => t !== false);
   if(icons.length === 0) return;
 
-  if(!chromeLocalData || chromeLocalData.length === 0) 
+  if(!chromeLocalData || chromeLocalData.length === 0)
   {
     chromeLocalData = await chrome.storage.local.get();
   }
   iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
-  
+
   Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
       resolve({
@@ -112,7 +84,7 @@ const makeStatsFromInput = async (input) => {
 /**
  * 아이콘 선택기 창을 연다
  * @param {boolean} open (optional)
- * @returns 
+ * @returns
  */
 const toggleSelector = (open) => {
   isSelectorOpen = iconSelectorRoot.classList.contains("show");
@@ -121,24 +93,19 @@ const toggleSelector = (open) => {
   if(open === true)
   {
     const chatPos = inputArea.getBoundingClientRect();
-    // const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
     iconSelectorRoot.style.bottom = `${chatPos.height + 60}px`;
 
-    inputAreaParent.appendChild(iconSelectorRoot);
     iconSelectorRoot.classList.remove("hide");
     iconSelectorRoot.classList.add("show");
     isSelectorOpen = true;
     iconSelectorCursorArrowCount = 0;
-    setTippyInstance(true, false);
   }
-  else 
+  else
   {
     tippy.hideAll(0);
     iconSelectorRoot.classList.remove("show");
     iconSelectorRoot.classList.add("hide");
-    inputAreaParent.removeChild(iconSelectorRoot);
     isSelectorOpen = false;
-    setTippyInstance(true, true);
   }
 
   if(inputArea) inputArea.focus();
@@ -147,20 +114,14 @@ const toggleSelector = (open) => {
 /**
  * 아이콘 선택기 창을 구성한다
  * 키워드는 ~가 포함되지 않은 것
- * 
- * @param {string} keyword 
+ *
+ * @param {string} keyword
  */
 const constructSelectorItems = (keyword) => {
   if(lastSearchKeyword === keyword) return;
   lastSearchKeyword = keyword;
-
-  iconSelectorList.innerHTML = "";
-  const iconList = iconFilter(keyword);
-  for(const icon of iconList)
-  {
-    const itemIcon = preRenderedIcons.thumbnail[icon.nameHash];
-    iconSelectorList.appendChild(itemIcon);
-  }
+  const itemIconList = iconFilter(keyword).map(icon => preRenderedIcons.thumbnail[icon.nameHash]);
+  iconSelectorList.replaceChildren(...itemIconList);
 }
 
 
@@ -175,11 +136,11 @@ const constructSelectorItems = (keyword) => {
 
 /**
  * 아이콘 선택기에서 아이콘을 선택했을 때 호출됨.
- * @param {MouseEvent} e 
+ * @param {MouseEvent} e
  */
 const iconClickHandler = async (e) => {
   const currentInput = inputArea.innerText.trimStart().split(" ").pop();
-  
+
   inputArea.focus();
   let keywords = e.target.getAttribute("data-keywords").split(",").map(w => `~${w}`);
   let keyword = keywords[0];
@@ -217,12 +178,12 @@ const iconClickHandler = async (e) => {
 
 /**
  * 채팅창에 올라온 아이콘을 선택했을 때 호출됨.
- * @param {MouseEvent} e 
+ * @param {MouseEvent} e
  */
 const iconClickHandlerInChat = async (e) => {
   const keyword = e.target.alt;
 
-  if(!isVod) 
+  if(!isVod)
   {
     inputArea.focus();
     const dataTransfer = new DataTransfer();
@@ -244,7 +205,7 @@ const iconClickHandlerInChat = async (e) => {
 
 /**
  * 채팅 입력창에 변화가 생겼을 때 호출됨.
- * @param {KeyboardEvent} e 
+ * @param {KeyboardEvent} e
  * @returns any
  */
 const chatInputHandler = (e) => {
@@ -284,7 +245,6 @@ const chatInputHandler = (e) => {
   {
     toggleSelector(true);
     tippy.hideAll(0);
-    setTippyInstance(true, true);
     constructSelectorItems(keyword.slice(1));
   }
 }
@@ -295,7 +255,7 @@ const chatInputHandler = (e) => {
  * 키보드로 아이콘 선택하기
  * 계속 입력시에 이동하는거 구현해야해서
  * keydown 이벤트로 따로 분리함.
- * @param {KeyboardEvent} e 
+ * @param {KeyboardEvent} e
  */
 const chatInputHandlerForArrow = async (e) => {
   const text = inputArea.innerText.trimStart();
@@ -404,14 +364,14 @@ const chatInputHandlerForArrow = async (e) => {
         const slicedKeyword = keyword.slice(currentInput.length);
         const dataTransfer = new DataTransfer();
         dataTransfer.setData("text", `${slicedKeyword} `);
-        const event = new ClipboardEvent("paste", { 
+        const event = new ClipboardEvent("paste", {
           clipboardData: dataTransfer,
           bubbles: true,
         });
         inputArea.dispatchEvent(event);
         currentChatText = currentChatText + slicedKeyword + " ";
       }
-      else 
+      else
       {
         /**
          * 클립보드에 복사
@@ -436,7 +396,7 @@ const chatInputHandlerForArrow = async (e) => {
   }
   /**
    * 이 부분은 특수 키가 아닐 때만 실행됨 => 변수 초기화
-   */  
+   */
   iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
   iconSelectorCursor = -1;
 }
@@ -447,10 +407,10 @@ const chatInputHandlerForArrow = async (e) => {
 
 /**
  * 채팅창에 변화가 생겼을 때 호출됨.
- * 
+ *
  * 새로 추가된 채팅마다 replaceChatData를 호출함.
- * @param {*} mutationList 
- * @param {*} observer 
+ * @param {*} mutationList
+ * @param {*} observer
  */
 const chatObserverHandler = (mutationList, observer) => {
   for(const record of mutationList)
@@ -463,7 +423,6 @@ const chatObserverHandler = (mutationList, observer) => {
       });
     }
   }
-  setTippyInstance(false, false);
 }
 
 const streamChatObserverHandler = (mutationList, observer) => {
@@ -491,7 +450,7 @@ const streamChatObserverHandler = (mutationList, observer) => {
 /**
  * 채팅 하나에 대해서 관련된
  * 아이콘이 있으면 아이콘으로 바꿈
- * @param {Element} chatBody 
+ * @param {Element} chatBody
  */
 const replaceChatData = (chatBody) => {
   const oldFragments = chatBody.children;
@@ -524,38 +483,48 @@ const replaceChatData = (chatBody) => {
             txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
             newFragments.push(txt);
             /**
-             * 현재 인덱스는 아이콘이므로 
-             * +1 한 것을 할당해야함. 
+             * 현재 인덱스는 아이콘이므로
+             * +1 한 것을 할당해야함.
              */
             nonIconStartIdx = tokenidx + 1;
 
             /**
-             * 아이콘 요소 생성함
+             * 아이콘 요소 복사해서 생성함
              */
-             const img = preRenderedIcons.image[icon.nameHash].cloneNode();
-             img.onclick = iconClickHandlerInChat;
-     
-             if(iconRenderOptions.type === 0)
-             {
-               const span = document.createElement("span");
-               span.classList.add("newline");
-               span.appendChild(img);
-               newFragments.push(span);
-             }
-             else if(iconRenderOptions.type === 1)
-             {
-               const span = document.createElement("span");
-               span.classList.add("newline");
-               span.appendChild(img);
-               newFragments.push(span);
-             }
-             else if(iconRenderOptions.type === 2)
-             {
-               newFragments.push(img);
-             }
-     
-             chatScrollByOne();
-             if(iconRenderOptions.type !== 2) isOneReplaced = true;
+            const img = preRenderedIcons.image[icon.nameHash].cloneNode();
+            img.onclick = iconClickHandlerInChat;
+            img.onmouseover = () => {
+              tippy(img, {
+                hideOnClick: false,
+                placement: "top",
+                theme: "twitch",
+              }).show();
+            }
+            img.onmouseout = () => {
+              img._tippy && img._tippy.destroy();
+            }
+
+            if(iconRenderOptions.type === 0)
+            {
+              const span = document.createElement("span");
+              span.classList.add("newline");
+              span.appendChild(img);
+              newFragments.push(span);
+            }
+            else if(iconRenderOptions.type === 1)
+            {
+              const span = document.createElement("span");
+              span.classList.add("newline");
+              span.appendChild(img);
+              newFragments.push(span);
+            }
+            else if(iconRenderOptions.type === 2)
+            {
+              newFragments.push(img);
+            }
+
+            chatScrollByOne();
+            if(iconRenderOptions.type !== 2) isOneReplaced = true;
           }
         }
       }
@@ -572,7 +541,7 @@ const replaceChatData = (chatBody) => {
         newFragments.push(txt);
       }
     }
-    else 
+    else
     {
       newFragments.push(fragment);
     }
@@ -600,7 +569,7 @@ const replaceChatData = (chatBody) => {
    * root
    *  - wrapper
    *    - list
-   * 
+   *
    */
   if(document.getElementById("icon-selector-root"))
   {
@@ -628,8 +597,8 @@ const replaceChatData = (chatBody) => {
   iconSelectorListWrapper.appendChild(iconSelectorList);
   iconSelectorRoot.appendChild(iconSelectorListWrapper);
   isSelectorOpen = false;
-   
-  iconSelectorList.innerHTML = "";
+
+  iconSelectorList.replaceChildren();
   inputAreaParent.appendChild(iconSelectorRoot);
 }
 
@@ -653,10 +622,10 @@ const iconAreaExists = () => {
     }
     toggleSelector(open);
   }
-  
+
   icon.src = `https://twitch-icons.probius.dev/icon?${32}`;
   iconSpace.replaceWith(icon);
-  
+
   iconArea.insertBefore(openSelectorButton, iconArea.lastChild);
 }
 
@@ -679,7 +648,6 @@ const chatAreaExists = () => {
   chatArea.querySelectorAll(chatBodySelector).forEach(chatDiv => {
     replaceChatData(chatDiv);
   });
-  setTippyInstance(false, false);
 }
 
 ////////////////////////////////////////
@@ -694,7 +662,7 @@ const run_1_functions = async () => {
     return;
   }
 
-  try 
+  try
   {
     logger.debug("[run_1_functions]");
   }

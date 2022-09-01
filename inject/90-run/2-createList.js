@@ -29,10 +29,11 @@
       iconImage.setAttribute("data-keywords", icon.keywords);
       iconImage.setAttribute("data-tags", icon.tags);
       iconImage.setAttribute("data-tippy-content", `~${icon.keywords[0]}`);
+      iconImage.loading = "lazy";
       /**
        * 채팅 창에 렌더되는 큰 이미지는 cloneNode로 복사해서 사용한다.
        * 그런데 cloneNode는 이벤트리스너를 복사할 수 없으니까
-       * 복사하는 부분에서 onclick 설정한다.
+       * 복사하는 부분에서 onclick하고 tippy 설정한다.
        */
 
       const iconThumbnail = document.createElement("img");
@@ -47,7 +48,18 @@
       iconThumbnail.setAttribute("data-keywords", `${icon.keywords}`);
       iconThumbnail.setAttribute("data-tags", icon.tags);
       iconThumbnail.setAttribute("data-tippy-content", `~${icon.keywords[0]}`);
+      iconThumbnail.loading = "lazy";
       iconThumbnail.onclick = iconClickHandler;
+      iconThumbnail.onmouseover = () => {
+        tippy(iconThumbnail, {
+          hideOnClick: false,
+          placement: "top",
+          theme: "twitch",
+        }).show();
+      }
+      iconThumbnail.onmouseout = () => {
+        iconThumbnail._tippy && iconThumbnail._tippy.destroy();
+      }
 
       preRenderedIcons.image[icon.nameHash] = iconImage;
       preRenderedIcons.thumbnail[icon.nameHash] = iconThumbnail;
@@ -55,7 +67,6 @@
       resolve(true);
     })
   }));
-  setTippyInstance();
 }
 
 ////////////////////////////////////////
