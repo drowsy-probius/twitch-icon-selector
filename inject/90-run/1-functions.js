@@ -291,7 +291,7 @@ const chatInputHandlerForArrow = async (e) => {
 
     iconSelectorList.children[iconSelectorCursor].classList.add("selected");
     tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: false,
+      hideOnClick: true,
       placement: "top",
       theme: "twitch",
     }).show();
@@ -318,7 +318,7 @@ const chatInputHandlerForArrow = async (e) => {
 
     iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.add("selected");
     tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: false,
+      hideOnClick: true,
       placement: "top",
       theme: "twitch",
     }).show();
@@ -495,7 +495,7 @@ const replaceChatData = (chatBody) => {
             img.onclick = iconClickHandlerInChat;
             img.onmouseover = () => {
               tippy(img, {
-                hideOnClick: false,
+                hideOnClick: true,
                 placement: "top",
                 theme: "twitch",
               }).show();

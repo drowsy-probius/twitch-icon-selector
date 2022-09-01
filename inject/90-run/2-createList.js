@@ -52,7 +52,7 @@
       iconThumbnail.onclick = iconClickHandler;
       iconThumbnail.onmouseover = () => {
         tippy(iconThumbnail, {
-          hideOnClick: false,
+          hideOnClick: true,
           placement: "top",
           theme: "twitch",
         }).show();
