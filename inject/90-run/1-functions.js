@@ -1,30 +1,3 @@
-/**
- * tippy 객체 설정 (마우스 올려놓았을 때 팝업)
- * @param {*} small 
- * @param {*} destroyOnly 
- * @returns 
- */
-const setTippyInstance = (small, destroyOnly=false) => {
-  if(small === true) try { thumbnailTippyInstance.destroy(); } catch(e) { }
-  if(small === false) try { imageTippyInstance.destroy(); } catch(e) { }
-  
-  if(destroyOnly === true) return;
-
-  if(small === true) thumbnailTippyInstance = tippy(".icon-item", {
-    hideOnClick: true,
-    placement: "top",
-    theme: "twitch",
-    duration: [275, 0],
-  });
-
-  if(small === false) imageTippyInstance = tippy(".icon, .icon-small, .icon-emoji", {
-    hideOnClick: true,
-    placement: "top",
-    theme: "twitch",
-    duration: [275, 0],
-  });
-}
-
 const setInputTippyInstance = (destroyOnly=false) => {
   try { inputTippyInstance.destroy(); } catch(e) { } 
   if(destroyOnly === true) return;
@@ -129,7 +102,6 @@ const toggleSelector = (open) => {
     iconSelectorRoot.classList.add("show");
     isSelectorOpen = true;
     iconSelectorCursorArrowCount = 0;
-    setTippyInstance(true, false);
   }
   else 
   {
@@ -138,7 +110,6 @@ const toggleSelector = (open) => {
     iconSelectorRoot.classList.add("hide");
     inputAreaParent.removeChild(iconSelectorRoot);
     isSelectorOpen = false;
-    setTippyInstance(true, true);
   }
 
   if(inputArea) inputArea.focus();
@@ -153,14 +124,8 @@ const toggleSelector = (open) => {
 const constructSelectorItems = (keyword) => {
   if(lastSearchKeyword === keyword) return;
   lastSearchKeyword = keyword;
-
-  iconSelectorList.innerHTML = "";
-  const iconList = iconFilter(keyword);
-  for(const icon of iconList)
-  {
-    const itemIcon = preRenderedIcons.thumbnail[icon.nameHash];
-    iconSelectorList.appendChild(itemIcon);
-  }
+  const itemIconList = iconFilter(keyword).map(icon => preRenderedIcons.thumbnail[icon.nameHash]);
+  iconSelectorList.replaceChildren(...itemIconList);
 }
 
 
@@ -272,7 +237,6 @@ const chatInputHandler = (e) => {
   {
     toggleSelector(true);
     tippy.hideAll(0);
-    setTippyInstance(true, true);
     constructSelectorItems(keyword.slice(1));
   }
 }
@@ -319,7 +283,7 @@ const chatInputHandlerForArrow = async (e) => {
 
     iconSelectorList.children[iconSelectorCursor].classList.add("selected");
     tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: false,
+      hideOnClick: true,
       placement: "top",
       theme: "twitch",
     }).show();
@@ -346,7 +310,7 @@ const chatInputHandlerForArrow = async (e) => {
 
     iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.add("selected");
     tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: false,
+      hideOnClick: true,
       placement: "top",
       theme: "twitch",
     }).show();
@@ -445,7 +409,6 @@ const chatObserverHandler = (mutationList, observer) => {
       });
     }
   }
-  setTippyInstance(false, false);
 }
 
 const streamChatObserverHandler = (mutationList, observer) => {
@@ -512,32 +475,42 @@ const streamChatObserverHandler = (mutationList, observer) => {
             nonIconStartIdx = tokenidx + 1;
 
             /**
-             * 아이콘 요소 생성함
+             * 아이콘 요소 복사해서 생성함
              */
-             const img = preRenderedIcons.image[icon.nameHash].cloneNode();
-             img.onclick = iconClickHandlerInChat;
+            const img = preRenderedIcons.image[icon.nameHash].cloneNode();
+            img.onclick = iconClickHandlerInChat;
+            img.onmouseover = () => {
+              tippy(img, {
+                hideOnClick: true,
+                placement: "top",
+                theme: "twitch",
+              }).show();
+            }
+            img.onmouseout = () => {
+              img._tippy && img._tippy.destroy();
+            }
      
-             if(iconRenderOptions.type === 0)
-             {
-               const span = document.createElement("span");
-               span.classList.add("newline");
-               span.appendChild(img);
-               newFragments.push(span);
-             }
-             else if(iconRenderOptions.type === 1)
-             {
-               const span = document.createElement("span");
-               span.classList.add("newline");
-               span.appendChild(img);
-               newFragments.push(span);
-             }
-             else if(iconRenderOptions.type === 2)
-             {
-               newFragments.push(img);
-             }
-     
-             chatScrollByOne();
-             if(iconRenderOptions.type !== 2) isOneReplaced = true;
+            if(iconRenderOptions.type === 0)
+            {
+              const span = document.createElement("span");
+              span.classList.add("newline");
+              span.appendChild(img);
+              newFragments.push(span);
+            }
+            else if(iconRenderOptions.type === 1)
+            {
+              const span = document.createElement("span");
+              span.classList.add("newline");
+              span.appendChild(img);
+              newFragments.push(span);
+            }
+            else if(iconRenderOptions.type === 2)
+            {
+              newFragments.push(img);
+            }
+    
+            chatScrollByOne();
+            if(iconRenderOptions.type !== 2) isOneReplaced = true;
           }
         }
       }
@@ -611,7 +584,7 @@ const streamChatObserverHandler = (mutationList, observer) => {
   iconSelectorRoot.appendChild(iconSelectorListWrapper);
   isSelectorOpen = false;
    
-  iconSelectorList.innerHTML = "";
+  iconSelectorList.replaceChildren();
   inputAreaParent.appendChild(iconSelectorRoot);
 }
 
@@ -660,7 +633,6 @@ const chatAreaExists = () => {
   chatArea.querySelectorAll(chatBodySelector).forEach(chatDiv => {
     replaceChatData(chatDiv);
   });
-  setTippyInstance(false, false);
 }
 
 ////////////////////////////////////////
