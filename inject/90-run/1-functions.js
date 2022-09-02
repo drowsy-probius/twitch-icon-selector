@@ -128,6 +128,16 @@ const constructSelectorItems = (keyword) => {
 }
 
 
+const insertTextToInputArea = (text) => {
+  inputArea.focus();
+  const dataTransfer = new DataTransfer();
+  dataTransfer.setData("text", text);
+  const event = new ClipboardEvent("paste", {
+    clipboardData: dataTransfer,
+    bubbles: true,
+  });
+  inputArea.dispatchEvent(event);
+}
 
 
 ////////////////////////////////////////
@@ -164,13 +174,7 @@ const iconClickHandler = async (e) => {
      * 바로 적용
      */
     const slicedKeyword = keyword.slice(currentInput.length);
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${slicedKeyword} `);
-    const event = new ClipboardEvent("paste", {
-      clipboardData: dataTransfer,
-      bubbles: true,
-    });
-    inputArea.dispatchEvent(event);
+    insertTextToInputArea(`${slicedKeyword} `);
     currentChatText = currentChatText + slicedKeyword;
   }
   await navigator.clipboard.writeText(keyword);
@@ -188,14 +192,7 @@ const iconClickHandlerInChat = async (e) => {
 
   if(!isVod)
   {
-    inputArea.focus();
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData("text", `${keyword} `);
-    const event = new ClipboardEvent("paste", {
-      clipboardData: dataTransfer,
-      bubbles: true,
-    });
-    inputArea.dispatchEvent(event);
+    insertTextToInputArea(`${keyword} `);
     currentChatText = keyword;
   }
 
@@ -260,7 +257,7 @@ const chatInputHandler = (e) => {
  * keydown 이벤트로 따로 분리함.
  * @param {KeyboardEvent} e
  */
-const chatInputHandlerForArrow = async (e) => {
+const chatInputHandlerForSpecialKeys = async (e) => {
   const text = inputArea.innerText.trimStart();
   if(e.key === "Enter")
   {
@@ -282,7 +279,53 @@ const chatInputHandlerForArrow = async (e) => {
   }
 
   isSelectorOpen = iconSelectorRoot.classList.contains("show");
-  if(!isSelectorOpen) return;
+  if(!isSelectorOpen)
+  {
+    /**
+     * mq 태그 자동 완성
+     */
+    if(e.key === "ArrowDown")
+    {
+      const addDirectionAttr = text.match(/\[mq d$/gi);
+      if(addDirectionAttr)
+      {
+        insertTextToInputArea("irection=");
+        return;
+      }
+      const addBehaviorAttr = text.match(/\[mq(\s+direction=.+)? b$/gi);
+      if(addBehaviorAttr)
+      {
+        insertTextToInputArea("ehavior=");
+        return;
+      }
+      const addLoopAttr = text.match(/\[mq(\s+direction=.+)?(\s+behavior=.+)? l$/gi);
+      if(addLoopAttr)
+      {
+        insertTextToInputArea("oop=");
+        return;
+      }
+      const addScrollamountAttr = text.match(/\[mq(\s+direction=.+)?(\s+behavior=.+)?(\s+loop=.+)? s$/gi);
+      if(addScrollamountAttr)
+      {
+        insertTextToInputArea("crollamount=");
+        return;
+      }
+      const addScrolldelayAttr = text.match(/\[mq(\s+direction=.+)?(\s+behavior=.+)?(\s+loop=.+)?(\s+scrollamount=.+)? s$/gi);
+      if(addScrolldelayAttr)
+      {
+        insertTextToInputArea("crolldelay=");
+        return;
+      }
+      const doCloseMqTag = text.match(/\[mq(.*)?\]([^\[]*)$/gi);
+      if(doCloseMqTag)
+      {
+        insertTextToInputArea(" [/mq]");
+        return;
+      }
+    }
+
+    return;
+  }
 
   if(e.key === "ArrowRight")
   {
@@ -366,13 +409,7 @@ const chatInputHandlerForArrow = async (e) => {
       if(doPaste && isPrefix)
       {
         const slicedKeyword = keyword.slice(currentInput.length);
-        const dataTransfer = new DataTransfer();
-        dataTransfer.setData("text", `${slicedKeyword} `);
-        const event = new ClipboardEvent("paste", {
-          clipboardData: dataTransfer,
-          bubbles: true,
-        });
-        inputArea.dispatchEvent(event);
+        insertTextToInputArea(`${slicedKeyword} `);
         currentChatText = currentChatText + slicedKeyword + " ";
       }
       else
@@ -484,7 +521,7 @@ const replaceChatData = (chatBody) => {
  const inputAreaExists = () => {
   inputArea.onkeyup = chatInputHandler;
   inputArea.onpaste = chatInputHandler;
-  inputArea.onkeydown = chatInputHandlerForArrow;
+  inputArea.onkeydown = chatInputHandlerForSpecialKeys;
   setInputTippyInstance();
 }
 

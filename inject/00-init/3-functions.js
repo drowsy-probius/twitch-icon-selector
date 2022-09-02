@@ -171,20 +171,19 @@ const iconMatch = (keyword) => {
  * @returns 
  */
 const replaceMarquee = (match, direction, behavior, loop, scrollamount, scrolldelay, body) => {
-  // 빈 값 확인
-  if(typeof direction == "undefined") direction = "";
-  if(typeof behavior == "undefined") behavior = "";
-  if(typeof loop == "undefined") loop = "";
-  if(typeof scrollamount == "undefined") scrollamount = "";
-  if(typeof scrolldelay == "undefined") scrolldelay = "";
-
   // 내용이 빈 mq 태그는 무의미하므로 리턴
-  if(typeof body == "undefined") return "";
+  if (typeof body == "undefined") return "";
 
-  var scrollamount_value = scrollamount.replace(/[^0-9]/g, "");
+  // 빈 값 확인
+  if (typeof direction == "undefined") direction = "";
+  if (typeof behavior == "undefined") behavior = "";
+  if (typeof loop == "undefined") loop = "";
+  if (typeof scrollamount == "undefined") scrollamount = "";
+  if (typeof scrolldelay == "undefined") scrolldelay = "";
 
+  let scrollamount_value = scrollamount.replace(/[^0-9]/g, "");
   // scrollamount 값을 50 이하로 제한함(50이 넘으면 50으로 강제 하향조정)
-  if(scrollamount_value > 50) scrollamount = ' scrollamount=50';
+  if (scrollamount_value > 50) scrollamount = ' scrollamount=50';
 
   /**
    * body 값은 띄워놔야 아이콘 변환이 더 넓은 범위로 됨
@@ -235,6 +234,11 @@ const replaceStyleTags = (text) => {
   return text;
 }
 
+
+const filterHTMLTags = (text) => {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/&amp;gt/g, '&gt').replace(/&amp;lt/g, '&lt');
+}
+
 /**
  * 
  * @param {string} text
@@ -243,11 +247,13 @@ const replaceStyleTags = (text) => {
  * 사진, 태그 등이 변경된 값
  */
  const replaceTextToElements = function (text) {
-  isOneReplaced = false;
+  let isOneReplaced = false;
+  text = filterHTMLTags(text);
 
   const replaceRecursively = (text) => {
     const container = document.createElement("div");
     container.innerHTML = text;
+
     const children = [];
 
     for (const child of container.childNodes) {
@@ -342,7 +348,6 @@ const replaceStyleTags = (text) => {
   if (iconRenderOptions.disableTags === 0 && tagCommandEnabledStreamers.includes(watchingStreamer)) {
     text = replaceStyleTags(text);
   }
-
   const replaced = replaceRecursively(text);
   return replaced;
 }
