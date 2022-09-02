@@ -171,6 +171,9 @@ const iconMatch = (keyword) => {
  * @returns 
  */
  const replaceMarquee = (match, direction, behavior, loop, scrollamount, scrolldelay, body) => {
+  // 내용이 빈 mq 태그는 무의미하므로 리턴
+  if(typeof body == "undefined") return "";
+
   // 빈 값 확인
   if(typeof direction == "undefined") direction = "";
   if(typeof behavior == "undefined") behavior = "";
@@ -178,11 +181,7 @@ const iconMatch = (keyword) => {
   if(typeof scrollamount == "undefined") scrollamount = "";
   if(typeof scrolldelay == "undefined") scrolldelay = "";
 
-  // 내용이 빈 mq 태그는 무의미하므로 리턴
-  if(typeof body == "undefined") return "";
-
-  var scrollamount_value = scrollamount.replace(/[^0-9]/g, "");
-
+  let scrollamount_value = scrollamount.replace(/[^0-9]/g, "");
   // scrollamount 값을 50 이하로 제한함(50이 넘으면 50으로 강제 하향조정)
   if(scrollamount_value > 50) scrollamount = ' scrollamount=50';
 
@@ -233,6 +232,12 @@ const replaceStyleTags = (text) => {
   return text;
 }
 
+
+const filterHTMLTags = (text) => {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/&amp;gt/g, '&gt').replace(/&amp;lt/g, '&lt');
+}
+
+
 /**
  * 
  * @param {string} text
@@ -240,8 +245,9 @@ const replaceStyleTags = (text) => {
  * @returns 
  * 사진, 태그 등이 변경된 값
  */
- const replaceTextToElements = function (text) {
-  isOneReplaced = false;
+const replaceTextToElements = function (text) {
+  let isOneReplaced = false;
+  text = filterHTMLTags(text);
 
   const replaceRecursively = (text) => {
     const container = document.createElement("div");
