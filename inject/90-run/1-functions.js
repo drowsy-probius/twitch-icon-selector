@@ -137,6 +137,7 @@ const insertTextToInputArea = (text) => {
     bubbles: true,
   });
   inputArea.dispatchEvent(event);
+  currentChatText = currentChatText + text;
 }
 
 
@@ -175,7 +176,6 @@ const iconClickHandler = async (e) => {
      */
     const slicedKeyword = keyword.slice(currentInput.length);
     insertTextToInputArea(`${slicedKeyword} `);
-    currentChatText = currentChatText + slicedKeyword;
   }
   await navigator.clipboard.writeText(keyword);
   toggleSelector(false);
@@ -193,7 +193,6 @@ const iconClickHandlerInChat = async (e) => {
   if(!isVod)
   {
     insertTextToInputArea(`${keyword} `);
-    currentChatText = keyword;
   }
 
   await navigator.clipboard.writeText(keyword);
@@ -410,7 +409,6 @@ const chatInputHandlerForSpecialKeys = async (e) => {
       {
         const slicedKeyword = keyword.slice(currentInput.length);
         insertTextToInputArea(`${slicedKeyword} `);
-        currentChatText = currentChatText + slicedKeyword + " ";
       }
       else
       {
