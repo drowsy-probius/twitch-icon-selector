@@ -26,6 +26,7 @@ const resetVariables = () => {
   inputArea = undefined;
   inputAreaParent = undefined;
   inputSendButton = undefined;
+  iconSelectorPosition = undefined;
   iconArea = undefined;
   profileArea = undefined;
 
@@ -155,6 +156,194 @@ const iconMatch = (keyword) => {
   return false;
 }
 
+
+
+/**
+ * fork from https://funzinnu.com/stream/js/chatassist.js
+ * 
+ * @param {*} match 
+ * @param {*} direction 
+ * @param {*} behavior 
+ * @param {*} loop 
+ * @param {*} scrollamount 
+ * @param {*} scrolldelay 
+ * @param {*} body 
+ * @returns 
+ */
+ const replaceMarquee = (match, direction, behavior, loop, scrollamount, scrolldelay, body) => {
+  // 빈 값 확인
+  if(typeof direction == "undefined") direction = "";
+  if(typeof behavior == "undefined") behavior = "";
+  if(typeof loop == "undefined") loop = "";
+  if(typeof scrollamount == "undefined") scrollamount = "";
+  if(typeof scrolldelay == "undefined") scrolldelay = "";
+
+  // 내용이 빈 mq 태그는 무의미하므로 리턴
+  if(typeof body == "undefined") return "";
+
+  var scrollamount_value = scrollamount.replace(/[^0-9]/g, "");
+
+  // scrollamount 값을 50 이하로 제한함(50이 넘으면 50으로 강제 하향조정)
+  if(scrollamount_value > 50) scrollamount = ' scrollamount=50';
+
+  /**
+   * body 값은 띄워놔야 아이콘 변환이 더 넓은 범위로 됨
+   */
+  return `<marquee ${direction} ${behavior} ${loop} ${scrollamount} ${scrolldelay} > ${body} </marquee>`
+}
+
+
+/**
+ * fork from https://funzinnu.com/stream/js/chatassist.js
+ * 
+ * []또는 ``` 등으로 표시된 스타일 태그를 변경
+ * 띄어쓰기를 추가해야 제대로 표기될 것이라 생각함.
+ * 
+ * @param {string} text 
+ */
+const replaceStyleTags = (text) => {
+  // 나무위키식
+  text = text.replace(/'''(.*)'''/gi, "<b>$1</b>" );
+  text = text.replace(/''(.*)''/gi, "<i>$1</i>");
+  text = text.replace(/~~(.*)~~/gi, "<strike>$1</strike>");
+  text = text.replace(/--(.*)--/gi, "<strike>$1</strike>");
+  text = text.replace(/__(.*)__/gi, "<u>$1</u>");
+
+  //닫는 태그가 없는 [b][i][s]
+  text = text.replace(/\[b\](.*)/gi, "<b>$1</b>"); //볼드 [b]blah
+  text = text.replace(/\[i\](.*)/gi, "<i>$1</i>"); //이탤릭 [i]blah
+  text = text.replace(/\[s\](.*)/gi, "<strike>$1</strike>"); //취소선 [s]blah
+
+  //강제개행
+  text = text.replace(/\[br\]/gi, "<br/>");
+
+  /**
+   * [mq] marquee 태그
+   * 
+   * chatassist에서 가져왔는데 이 방식은 
+   * direction, behavior, loop, scrollamount, scrolldelay 순서가 맞아야만 실행이 됨.
+   * 실제 어떻게 렌더링 되는 지는 모르겠지만
+   * 불편하더라도 스트리머 쪽에서 돌아가는 방식대로 구현하는게 목표임.
+   * 
+   * 순서 상관 없이 하려면 속성 값 부분 통채로 함수에 넘겨서 처리하도록 하면 됨.  
+   * 
+   *  */ 
+  text = text.replace(/\[mq( direction=[^\ ]*)?( behavior=[^\ ]*)?( loop=[^\ ]*)?( scrollamount=[^\ ]*)?( scrolldelay=[^\ ]*)?\](.+)\[\/mq\]/gi, replaceMarquee);
+
+  return text;
+}
+
+/**
+ * 
+ * @param {string} text
+ * element.innerText 값 
+ * @returns 
+ * 사진, 태그 등이 변경된 값
+ */
+ const replaceTextToElements = function (text) {
+  isOneReplaced = false;
+
+  const replaceRecursively = (text) => {
+    const container = document.createElement("div");
+    container.innerHTML = text;
+    const children = [];
+
+    for (const child of container.childNodes) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const tokens = child.textContent.trim().split(" ");
+        let textStartIndex = 0;
+        let tokenIndex;
+        for (tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+          const token = tokens[tokenIndex];
+          if (!isOneReplaced && token.startsWith("~")) {
+            const keyword = token.slice(1);
+            const icon = iconMatch(keyword);
+            if (icon) {
+              /**
+               * 아이콘 매치 이전까지의 텍스트를 하나의 .text-fragment로 추가함
+               */
+              if (tokens.slice(textStartIndex, tokenIndex).join(" ").length > 0) {
+                const text = document.createElement("span");
+                text.classList.add("text-fragment");
+                text.setAttribute("data-a-target", "chat-message-text");
+                text.replaceChildren(tokens.slice(textStartIndex, tokenIndex).join(" "));
+                children.push(text);
+              }
+              /**
+               * 현재 인덱스는 아이콘이므로
+               * +1 한 것을 할당해야함.
+               */
+              textStartIndex = tokenIndex + 1;
+
+              /**
+               * 아이콘 요소 복사해서 생성함
+               */
+              const image = preRenderedIcons.image[icon.nameHash].cloneNode();
+              image.onclick = iconClickHandlerInChat;
+              image.onmouseover = () => {
+                tippy(image, {
+                  hideOnClick: true,
+                  placement: "top",
+                  theme: "twitch",
+                }).show();
+              }
+              image.onmouseout = () => {
+                image._tippy && image._tippy.destroy();
+              }
+              if (iconRenderOptions.size === 0) {
+                const span = document.createElement("span");
+                span.classList.add("newline");
+                span.appendChild(image);
+                children.push(span);
+              }
+              else if (iconRenderOptions.size === 1) {
+                const span = document.createElement("span");
+                span.classList.add("newline");
+                span.appendChild(image);
+                children.push(span);
+              }
+              else if (iconRenderOptions.size === 2) {
+                children.push(image);
+              }
+              if (iconRenderOptions.size !== 2) isOneReplaced = true;
+            }
+          }
+        }
+        /**
+         * 토큰 목록 순회한 뒤에
+         * 매치된 아이콘이 없었으면 그냥 텍스트 요소로 추가
+         */
+        if (textStartIndex < tokenIndex && tokens.slice(textStartIndex, tokenIndex).join(" ").length > 0) {
+          const text = document.createElement("span");
+          text.classList.add("text-fragment");
+          text.setAttribute("data-a-target", "chat-message-text");
+          text.replaceChildren(tokens.slice(textStartIndex, tokenIndex).join(" "));
+          children.push(text);
+        }
+      }
+      else {
+        const replacedChild = replaceRecursively(child.innerHTML);
+        child.replaceChildren(...replacedChild);
+        children.push(child);
+      }
+    }
+
+    return children;
+  }
+
+  /**
+   * [] 태그 명령어를 지원할 지에 대한 설정.
+   * 
+   * 1. 사용자가 비활성화하지 않는 경우
+   * 2. 호환되는 스트리머인 경우 (일단은 하드코딩)
+   */
+  if (iconRenderOptions.disableTags === 0 && tagCommandEnabledStreamers.includes(watchingStreamer)) {
+    text = replaceStyleTags(text);
+  }
+
+  const replaced = replaceRecursively(text);
+  return replaced;
+}
 
 
 ////////////////////////////////////////

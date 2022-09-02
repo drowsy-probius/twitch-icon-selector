@@ -43,6 +43,11 @@ const find_3_streamer = async () => {
        */
       watchingStreamer = location.href.split("/").pop().split("?")[0];
     }
+
+    /**
+     * TEST CODE
+     */
+    if(watchingStreamer === "k123s456h") watchingStreamer = "funzinnu";
     
     if(!streamers.includes(watchingStreamer))
     {
@@ -50,6 +55,10 @@ const find_3_streamer = async () => {
       error = `${watchingStreamer} is not in our whitelist`;
       logger.info(error);
       return [fail, error];
+    }
+    if(!tagCommandEnabledStreamers.includes(watchingStreamer))
+    {
+      logger.info(`${watchingStreamer} does not support tag commands.`)
     }
     logger.debug(`[find_3_streamer] ${watchingStreamer}`);
   

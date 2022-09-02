@@ -93,9 +93,11 @@ const toggleSelector = (open) => {
 
   if(open === true)
   {
-    const chatPos = inputArea.getBoundingClientRect();
-    // const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
-    iconSelectorRoot.style.bottom = `${chatPos.height + 60}px`;
+    /**
+    * 슬로우 모드에서도 적절한 위치에 보여줌.
+    */
+    const chatPos = document.querySelector(iconSelectorPositionSelector).getBoundingClientRect();
+    iconSelectorRoot.style.bottom = `${chatPos.height + 5}px`;
 
     inputAreaParent.appendChild(iconSelectorRoot);
     iconSelectorRoot.classList.remove("hide");
@@ -270,9 +272,12 @@ const chatInputHandlerForArrow = async (e) => {
     return;
   }
 
+  isSelectorOpen = iconSelectorRoot.classList.contains("show");
+  if(!isSelectorOpen) return;
+
   if(e.key === "ArrowRight")
   {
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
       iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
       iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
@@ -280,18 +285,18 @@ const chatInputHandlerForArrow = async (e) => {
     iconSelectorCursor = (iconSelectorList.children.length === iconSelectorCursor + 1)
     ? 0
     : iconSelectorCursor + 1;
-
-    iconSelectorList.children[iconSelectorCursor].classList.add("selected");
-    tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: true,
-      placement: "top",
-      theme: "twitch",
-    }).show();
-
     if(iconSelectorCursorArrowCount < 0) iconSelectorCursorArrowCount += 1;
 
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
+      iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+      tippy(iconSelectorList.children[iconSelectorCursor], {
+        hideOnClick: true,
+        placement: "top",
+        theme: "twitch",
+      }).show();
+
+      
       const imagePos = iconSelectorList.children[iconSelectorCursor].getBoundingClientRect();
       const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
       const scrollAmount = imagePos.y - selectorPos.y - 5;
@@ -301,24 +306,22 @@ const chatInputHandlerForArrow = async (e) => {
   }
   if(e.key === "ArrowLeft")
   {
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
       iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
       iconSelectorList.children[iconSelectorCursor]._tippy && iconSelectorList.children[iconSelectorCursor]._tippy.destroy();
     }
     iconSelectorCursor = (iconSelectorCursor <= 0) ? iconSelectorList.children.length - 1 : iconSelectorCursor - 1;
-
-    iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.add("selected");
-    tippy(iconSelectorList.children[iconSelectorCursor], {
-      hideOnClick: true,
-      placement: "top",
-      theme: "twitch",
-    }).show();
-
     iconSelectorCursorArrowCount = Math.max(iconSelectorCursorArrowCount-1, -text.length);
 
-    if(iconSelectorCursor >= 0)
+    if(iconSelectorList.children[iconSelectorCursor])
     {
+      iconSelectorList.children[iconSelectorCursor].classList.add("selected");
+      tippy(iconSelectorList.children[iconSelectorCursor], {
+        hideOnClick: true,
+        placement: "top",
+        theme: "twitch",
+      }).show();
       const imagePos = iconSelectorList.children[iconSelectorCursor].getBoundingClientRect();
       const selectorPos = iconSelectorListWrapper.getBoundingClientRect();
       const scrollAmount = imagePos.y - selectorPos.y - 5;
@@ -383,7 +386,7 @@ const chatInputHandlerForArrow = async (e) => {
   /**
    * 이 부분은 특수 키가 아닐 때만 실행됨 => 변수 초기화
    */  
-  iconSelectorCursor >= 0 && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
+   iconSelectorList.children[iconSelectorCursor] && iconSelectorList.children[iconSelectorCursor].classList.remove("selected");
   iconSelectorCursor = -1;
 }
 
@@ -442,90 +445,14 @@ const streamChatObserverHandler = (mutationList, observer) => {
   const oldFragments = chatBody.children;
   const newFragments = [];
 
-  let isOneReplaced = false;
+
   for(let i=0; i<oldFragments.length; i++)
   {
     const fragment = oldFragments[i];
     if(fragment.classList.contains("text-fragment"))
     {
-      const tokens = fragment.innerText.split(" ");
-      let nonIconStartIdx = 0;
-      let tokenidx;
-      for(tokenidx=0; tokenidx < tokens.length; tokenidx++)
-      {
-        const token = tokens[tokenidx];
-        if(!isOneReplaced && token.startsWith("~"))
-        {
-          const keyword = token.slice(1);
-          const icon = iconMatch(keyword);
-          if(icon)
-          {
-            /**
-             * 아이콘 매치 이전까지의 텍스트를 하나의 .text-fragment로 추가함
-             */
-            const txt = document.createElement("span");
-            txt.classList.add("text-fragment");
-            txt.setAttribute("data-a-target", "chat-message-text");
-            txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
-            newFragments.push(txt);
-            /**
-             * 현재 인덱스는 아이콘이므로 
-             * +1 한 것을 할당해야함. 
-             */
-            nonIconStartIdx = tokenidx + 1;
-
-            /**
-             * 아이콘 요소 복사해서 생성함
-             */
-            const img = preRenderedIcons.image[icon.nameHash].cloneNode();
-            img.onclick = iconClickHandlerInChat;
-            img.onmouseover = () => {
-              tippy(img, {
-                hideOnClick: true,
-                placement: "top",
-                theme: "twitch",
-              }).show();
-            }
-            img.onmouseout = () => {
-              img._tippy && img._tippy.destroy();
-            }
-     
-            if(iconRenderOptions.type === 0)
-            {
-              const span = document.createElement("span");
-              span.classList.add("newline");
-              span.appendChild(img);
-              newFragments.push(span);
-            }
-            else if(iconRenderOptions.type === 1)
-            {
-              const span = document.createElement("span");
-              span.classList.add("newline");
-              span.appendChild(img);
-              newFragments.push(span);
-            }
-            else if(iconRenderOptions.type === 2)
-            {
-              newFragments.push(img);
-            }
-    
-            chatScrollByOne();
-            if(iconRenderOptions.type !== 2) isOneReplaced = true;
-          }
-        }
-      }
-      /**
-       * 토큰 목록 순회한 뒤에
-       * 매치된 아이콘이 없었으면 그냥 텍스트 요소로 추가
-       */
-      if(nonIconStartIdx < tokenidx)
-      {
-        const txt = document.createElement("span");
-        txt.classList.add("text-fragment");
-        txt.setAttribute("data-a-target", "chat-message-text");
-        txt.innerText = tokens.slice(nonIconStartIdx, tokenidx).join(" ");
-        newFragments.push(txt);
-      }
+      const replaced = replaceTextToElements(fragment.innerText);
+      newFragments.push(...replaced);
     }
     else 
     {
@@ -533,6 +460,7 @@ const streamChatObserverHandler = (mutationList, observer) => {
     }
   }
   chatBody.replaceChildren(...newFragments);
+  chatScrollByOne();
 }
 
 

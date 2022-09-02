@@ -21,12 +21,19 @@ const init = async () => {
   console.log(localData);
   const renderOptions = localData.iconRenderOptions;
 
-  document.getElementById("render-type").value = renderOptions.type;
-
-  document.getElementById("render-type").onchange = async (e) => {
+  document.getElementById("render-size").value = renderOptions.size;
+  document.getElementById("render-size").onchange = async (e) => {
     const localData = await browser.storage.local.get();
     console.log(localData);
-    localData.iconRenderOptions.type = Number(e.target.value);
+    localData.iconRenderOptions.size = Number(e.target.value);
+    await browser.storage.local.set(localData);
+  }
+
+  document.getElementById("render-disableTags").value = renderOptions.disableTags;
+  document.getElementById("render-disableTags").onchange = async (e) => {
+    const localData = await browser.storage.local.get();
+    console.log(localData);
+    localData.iconRenderOptions.disableTags = Number(e.target.value);
     await browser.storage.local.set(localData);
   }
   

@@ -20,7 +20,15 @@ let iconRenderOptions = {
    * 1: small (70, 70)
    * 2: emoji (28, 28) and inline (no render limit)
    */
-  type: 0,
+  size: 0,
+
+  /**
+   * []태그를 지원하는지에 대한 옵션
+   * 
+   * 0: off
+   * 1: on
+   */
+  disableTags: 0,
 }
 
 
@@ -32,6 +40,7 @@ const preRenderedIcons = {
 let rightColumn, streamChatArea;
 let chatArea;
 let inputArea, inputAreaParent, inputSendButton;
+let iconSelectorPosition;
 let iconArea;
 let profileArea;
 

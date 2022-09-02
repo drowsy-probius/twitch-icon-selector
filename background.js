@@ -8,7 +8,8 @@ const DEFAULT_LOCALSTORAGE = {
   iconMetadata: {},
   iconStats: {},
   iconRenderOptions: {
-    type: 0,
+    size: 0,
+    disableTags: 0,
   }
 }
 

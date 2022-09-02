@@ -15,10 +15,27 @@ const chatScrollSelector = `div[data-a-target='chat-scroller'] .simplebar-scroll
 const chatBodySelector = `.video-chat__message > span:nth-child(2), [data-test-selector="chat-line-message-body"]`;
 const chatTextSelector = `.text-fragment`;
 
+/**
+ * innerText 속성으로 값을 얻을 수 있는, `메시지 보내기`가 placeholder로 적혀있는 요소
+ */
 const inputAreaSelector = `[data-a-target="chat-input"]`;
+
+/**
+ * 전체 채팅 공간
+ */
 const inputAreaParentSelector = `.chat-room__content`;
 // const inputAreaContentSelector = `[data-a-target="chat-input-text"]`;
+
+/**
+ * 채팅 보내기 버튼
+ */
 const inputSendButtonSelector = `[data-a-target="chat-send-button"]`;
+
+/**
+ * 아이콘 선택기 창이 표시될 때 위치의 기준이 될 요소 
+ */
+const iconSelectorPositionSelector = `.chat-input`;
+
 
 const iconAreaSelector = `.chat-input__input-icons`;
 const profileAreaSelector = `[data-a-target="watch-mode-to-home"]`;
@@ -32,6 +49,10 @@ const logger = {
   error: console.error.bind(window.console, "[ICON Selector][ERROR] "),
   warn: console.warn.bind(window.console, "[ICON Selector][WARN] "),
 }
+
+const tagCommandEnabledStreamers = [
+  "funzinnu"
+]
 
 /**
  * 실행 중에 변경될 일 없는 변수 선언
