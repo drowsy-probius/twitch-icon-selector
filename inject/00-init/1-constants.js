@@ -49,6 +49,11 @@ const logger = {
   warn: console.warn.bind(window.console, "[ICON Selector][WARN] "),
 }
 
+
+const tagCommandEnabledStreamers = [
+  "funzinnu"
+]
+
 /**
  * 실행 중에 변경될 일 없는 변수 선언
  */

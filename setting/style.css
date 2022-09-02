@@ -24,17 +24,21 @@ div.options
 {
   grid-area: options;
   display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: flex-start;
 }
 
-div.type-selector
+div.selector
 {
   display: flex;
 }
 
-div.type-selector div 
+div.selector div 
 {
   margin-right: 10px;
 }
+
 
 div.buttons
 {

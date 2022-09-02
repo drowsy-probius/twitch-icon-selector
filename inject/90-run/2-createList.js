@@ -7,15 +7,16 @@
   await Promise.all(icons.map(icon => {
     return new Promise((resolve, reject) => {
       const iconImage = document.createElement("img");
-      if(iconRenderOptions.type === 0)
+      iconImage.classList.add("icon-common");
+      if(iconRenderOptions.size === 0)
       {
-        iconImage.classList.add("icon");
+        iconImage.classList.add("icon-large");
       }
-      else if(iconRenderOptions.type === 1)
+      else if(iconRenderOptions.size === 1)
       {
         iconImage.classList.add("icon-small");
       }
-      else if(iconRenderOptions.type === 2)
+      else if(iconRenderOptions.size === 2)
       {
         iconImage.classList.add("icon-emoji");
       }

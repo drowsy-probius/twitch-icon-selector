@@ -1,3 +1,39 @@
+/*
+  twitch css 수정
+*/
+div[data-a-target="chat-input"]
+{
+  /*
+  플러그인 아이콘 추가했으니 그에 맞게
+  입력 글자 칸도 줄어들어야 함.
+  */
+  padding-right: 9.5rem;
+}
+
+/*
+ 
+*/
+b .text-fragment
+{
+  font-weight: bold !important;
+}
+
+i .text-fragment
+{
+  font-style: italic !important;
+}
+
+strike .text-fragment
+{
+  text-decoration: line-through !important;
+}
+
+
+
+/*
+  새로 추가한 요소 css
+*/
+
 span.newline
 {
   /**
@@ -7,7 +43,7 @@ span.newline
   display: block;
 }
 
-img.icon
+img.icon-large
 {
   width: 100px;
   height: 100px;
@@ -23,12 +59,12 @@ img.icon-emoji
   height: 28px;
 }
 
-img.icon[data-name^="볼트공중"]
+img.icon-common[data-name^="볼트공중"]
 {
   animation: rotation .5s infinite linear;
 }
 
-img.icon[data-name^="관짝"]
+img.icon-common[data-name^="관짝"]
 {
   animation: shake .5s infinite linear;
 }
