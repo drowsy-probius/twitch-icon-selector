@@ -1,17 +1,5 @@
 /*
-  twitch css 수정
-*/
-div[data-a-target="chat-input"]
-{
-  /*
-  플러그인 아이콘 추가했으니 그에 맞게
-  입력 글자 칸도 줄어들어야 함.
-  */
-  padding-right: 9.5rem;
-}
-
-/*
- 
+ [] 태그 요소
 */
 b .text-fragment
 {
