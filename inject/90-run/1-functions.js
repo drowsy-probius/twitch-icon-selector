@@ -283,7 +283,7 @@ const chatInputHandlerForSpecialKeys = async (e) => {
     /**
      * mq 태그 자동 완성
      */
-    if(e.key === "ArrowDown")
+    if(iconRenderOptions.disableTags === 0 && tagCommandEnabledStreamers.includes(watchingStreamer) && e.key === "ArrowDown")
     {
       const addDirectionAttr = text.match(/\[mq d$/gi);
       if(addDirectionAttr)
