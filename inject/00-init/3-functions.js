@@ -24,8 +24,8 @@ const resetVariables = () => {
   streamChatArea = undefined;
   chatArea = undefined;
   inputArea = undefined;
-  inputAreaParent = undefined;
   inputSendButton = undefined;
+  iconSelectorParent = undefined;
   iconSelectorPosition = undefined;
   iconArea = undefined;
   profileArea = undefined;

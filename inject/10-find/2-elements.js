@@ -10,7 +10,7 @@
  * 
  * inputArea - live, popout
  * 
- * inputAreaParent - live, popout
+ * iconSelectorParent - live, popout
  * 
  * inputSendButton - live, popout
  * 
@@ -32,7 +32,7 @@ const find_2_elements = async () => {
 
       chatArea = await waitForElement(chatAreaSelector);
       inputArea = await waitForElement(inputAreaSelector);
-      inputAreaParent = await waitForElement(inputAreaParentSelector);
+      iconSelectorParent = await waitForElement(iconSelectorParentSelector);
       inputSendButton = await waitForElement(inputSendButtonSelector);
       iconSelectorPosition = await waitForElement(iconSelectorPositionSelector);
       iconArea = await waitForElement(iconAreaSelector);
@@ -60,7 +60,7 @@ const find_2_elements = async () => {
       streamChatArea = await waitForElement(streamChatSelector, rightColumn);
       chatArea = await waitForElement(chatAreaSelector, rightColumn);
       inputArea = await waitForElement(inputAreaSelector, rightColumn);
-      inputAreaParent = await waitForElement(inputAreaParentSelector, rightColumn);
+      iconSelectorParent = await waitForElement(iconSelectorParentSelector, rightColumn);
       inputSendButton = await waitForElement(inputSendButtonSelector, rightColumn);
       iconSelectorPosition = await waitForElement(iconSelectorPositionSelector, rightColumn);
       iconArea = await waitForElement(iconAreaSelector, rightColumn);
@@ -71,7 +71,7 @@ const find_2_elements = async () => {
       error = `Unable to find watching type ${location.href}`
     }
 
-    return [rightColumn, chatArea, inputArea, inputAreaParent, inputSendButton, iconArea];
+    return [rightColumn, chatArea, inputArea, iconSelectorParent, inputSendButton, iconArea];
   }
   catch(err)
   {

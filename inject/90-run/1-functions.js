@@ -93,13 +93,6 @@ const toggleSelector = (open) => {
 
   if(open === true)
   {
-    /**
-    * 슬로우 모드에서도 적절한 위치에 보여줌.
-    */
-    const chatPos = document.querySelector(iconSelectorPositionSelector).getBoundingClientRect();
-    iconSelectorRoot.style.bottom = `${chatPos.height + 5}px`;
-
-    inputAreaParent.appendChild(iconSelectorRoot);
     iconSelectorRoot.classList.remove("hide");
     iconSelectorRoot.classList.add("show");
     isSelectorOpen = true;
@@ -110,7 +103,6 @@ const toggleSelector = (open) => {
     tippy.hideAll(0);
     iconSelectorRoot.classList.remove("show");
     iconSelectorRoot.classList.add("hide");
-    inputAreaParent.removeChild(iconSelectorRoot);
     isSelectorOpen = false;
   }
 
@@ -521,9 +513,9 @@ const streamChatObserverHandler = (mutationList, observer) => {
 
 
 /**
- * inputAreaParent가 존재할 때 호출됨
+ * iconSelectorParent가 존재할 때 호출됨
  */
- const inputAreaParentExists = () => {
+ const iconSelectorParentExists = () => {
   /**
    * root
    *  - wrapper
@@ -551,14 +543,12 @@ const streamChatObserverHandler = (mutationList, observer) => {
   iconSelectorListWrapper.classList.add("icon-selector-wrapper");
   iconSelectorList.classList.add("icon-list");
 
-  iconSelectorRoot.style.maxHeight = `${SELECTOR_HEIGHT}px`;
-
   iconSelectorListWrapper.appendChild(iconSelectorList);
   iconSelectorRoot.appendChild(iconSelectorListWrapper);
   isSelectorOpen = false;
    
   iconSelectorList.replaceChildren();
-  inputAreaParent.appendChild(iconSelectorRoot);
+  iconSelectorParent.appendChild(iconSelectorRoot);
 }
 
 
