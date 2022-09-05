@@ -17,7 +17,7 @@ const run_3_modify = async () => {
     if(!isVod && !isClip) // live, popout
     {
       inputAreaExists();
-      inputAreaParentExists();
+      iconSelectorParentExists();
       iconAreaExists();
       inputSendButtonExists();
     }

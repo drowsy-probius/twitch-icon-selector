@@ -1,5 +1,3 @@
-const SELECTOR_HEIGHT = 200;
-
 ////////////////////////////////////////
 // element selectors
 
@@ -21,10 +19,9 @@ const chatTextSelector = `.text-fragment`;
 const inputAreaSelector = `[data-a-target="chat-input"]`;
 
 /**
- * 전체 채팅 공간
+ * 아이콘 셀렉터가 추가될 부모 요소
  */
-const inputAreaParentSelector = `.chat-room__content`;
-// const inputAreaContentSelector = `[data-a-target="chat-input-text"]`;
+const iconSelectorParentSelector = `.rich-input-container`;
 
 /**
  * 채팅 보내기 버튼

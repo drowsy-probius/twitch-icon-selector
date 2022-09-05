@@ -59,20 +59,26 @@ img.icon-common[data-name^="관짝"]
 
 div.icon-selector-root
 {
-  padding: 0 5px;
   position: absolute;
-  width: 100%;
-  max-height: 200px !important;
+  width: auto;
+  height: fit-content;
+  max-height: 20vh;
   visibility: hidden;
+  bottom: 100%;
+  margin: 0;
+  margin-bottom: 3.5px;
+
+  backdrop-filter: blur(1.5px) brightness(0.8);
 }
 
 div.icon-selector-wrapper
 {
-  background: lightgray;
+  background-color: var(--color-background-input);
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
   width: 100%;
+  height: inherit;
   max-height: inherit;
   z-index: 100;
   overflow: auto;
@@ -143,6 +149,17 @@ img.selected{
 {
   animation: appear .3s forwards;
 }
+
+/*
+트위치 다크 모드
+*/
+
+
+
+
+/* 
+애니메이션
+*/
 
 @keyframes rotation {
   from {

@@ -41,8 +41,8 @@ const preRenderedIcons = {
 
 let rightColumn, streamChatArea;
 let chatArea;
-let inputArea, inputAreaParent, inputSendButton;
-let iconSelectorPosition;
+let inputArea, inputSendButton;
+let iconSelectorParent, iconSelectorPosition;
 let iconArea;
 let profileArea;
 
