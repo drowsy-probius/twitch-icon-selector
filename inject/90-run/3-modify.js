@@ -30,10 +30,8 @@ const run_3_modify = async () => {
     fail = true;
     error = err;
   }
-  finally
-  {
-    return;
-  }
+
+  return;
 }
 
 

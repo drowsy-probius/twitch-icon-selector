@@ -149,7 +149,6 @@ const insertTextToInputArea = (text) => {
 const iconClickHandler = async (e) => {
   const currentInput = inputArea.innerText.trimStart().split(" ").pop();
 
-  inputArea.focus();
   let keywords = e.target.getAttribute("data-keywords").split(",").map(w => `~${w}`);
   let keyword = keywords[0];
   let isPrefix = false;
@@ -191,7 +190,6 @@ const iconClickHandlerInChat = async (e) => {
 
   await navigator.clipboard.writeText(keyword);
 }
-
 
 
 
@@ -528,15 +526,8 @@ const replaceChatData = (chatBody) => {
    *    - list
    *
    */
-  if(document.getElementById("icon-selector-root"))
-  {
-    iconSelectorRoot = document.getElementById("icon-selector-root");
-  }
-  if(document.getElementById("icon-selector-list"))
-  {
-    iconSelectorList = document.getElementById("icon-selector-list");
-  }
-  if(iconSelectorRoot && iconSelectorList) return;
+  document.getElementById("icon-selector-root")?.remove();
+  document.getElementById("icon-selector-list")?.remove();
 
   iconSelectorRoot = document.createElement("div");
   iconSelectorListWrapper = document.createElement("div");
@@ -554,7 +545,6 @@ const replaceChatData = (chatBody) => {
   isSelectorOpen = false;
 
   iconSelectorList.replaceChildren();
-
   iconSelectorParent.appendChild(iconSelectorRoot);
 }
 
@@ -563,7 +553,7 @@ const replaceChatData = (chatBody) => {
  * iconArea가 존재할 때 호출됨
  */
 const iconAreaExists = () => {
-  if(document.getElementById("icon-list-button")) return;
+  document.getElementById("icon-list-button")?.remove();
 
   const openSelectorButton = iconArea.lastChild.cloneNode(true);
   const iconSpace = openSelectorButton.querySelector("svg");

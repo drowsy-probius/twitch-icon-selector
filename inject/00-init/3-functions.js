@@ -31,7 +31,7 @@ const resetVariables = () => {
   profileArea = undefined;
 
   currentChatText = "";
-  lastSearchKeyword = "SomeImpossibleString!@#@!#!123";
+  lastSearchKeyword = undefined;
 
   chatAreaObserver && chatAreaObserver.disconnect();
   chatAreaObserver = undefined;
