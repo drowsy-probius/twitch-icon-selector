@@ -46,6 +46,7 @@ class Runner{
     }
     else if(startStage === 1)
     {
+      lastSearchKeyword = undefined;
       this.functions = [
         ...findStages,
         ...runStages,
@@ -53,6 +54,7 @@ class Runner{
     }
     else if(startStage === 2)
     {
+      lastSearchKeyword = undefined;
       this.functions = [
         ...runStages
       ];
