@@ -131,12 +131,25 @@ img.selected{
   box-shadow: 0 0 10px 5px gray;
 }
 
+/*
+tippy
+*/
+
 .tippy-box[data-theme~='twitch'] {
-  background-color: black;
+  background-color: var(--color-background-tooltip);
 }
 
 .tippy-box[data-theme~='twitch'][data-placement^='top'] > .tippy-arrow::before {
-  border-top-color: black;
+  border-top-color: var(--color-background-tooltip);
+}
+
+.tippy-content 
+{
+  color: var(--color-text-tooltip);
+  padding: 0.5rem !important;
+  border-radius: 0.4rem !important;
+  font-size: var(--font-size-6) !important;
+  font-weight: var(--font-weight-semibold);
 }
 
 
