@@ -4,7 +4,7 @@ const setInputTippyInstance = (destroyOnly=false) => {
 
   inputTippyInstance = tippy(inputArea, {
     content: "",
-    placement: "top",
+    placement: "top-start",
     theme: "twitch",
     trigger: "manual",
   });
@@ -327,7 +327,7 @@ const chatInputHandlerForSpecialKeys = async (e) => {
       iconSelectorList.children[iconSelectorCursor].classList.add("selected");
       tippy(iconSelectorList.children[iconSelectorCursor], {
         hideOnClick: true,
-        placement: "top",
+        placement: "top-start",
         theme: "twitch",
       }).show();
 
@@ -354,7 +354,7 @@ const chatInputHandlerForSpecialKeys = async (e) => {
       iconSelectorList.children[iconSelectorCursor].classList.add("selected");
       tippy(iconSelectorList.children[iconSelectorCursor], {
         hideOnClick: true,
-        placement: "top",
+        placement: "top-start",
         theme: "twitch",
       }).show();
       const imagePos = iconSelectorList.children[iconSelectorCursor].getBoundingClientRect();

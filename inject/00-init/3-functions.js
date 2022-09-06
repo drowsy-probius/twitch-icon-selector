@@ -289,7 +289,7 @@ const replaceTextToElements = function (text) {
               image.onmouseover = () => {
                 tippy(image, {
                   hideOnClick: true,
-                  placement: "top",
+                  placement: "top-end",
                   theme: "twitch",
                 }).show();
               }
