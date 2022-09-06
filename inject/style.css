@@ -67,16 +67,24 @@ div.icon-selector-root
   bottom: 100%;
   margin: 0;
   margin-bottom: 3.5px;
-
-  backdrop-filter: blur(1.5px) brightness(0.8);
 }
 
 div.icon-selector-wrapper
 {
+  backdrop-filter: blur(1.5px) brightness(0.8);
   background-color: var(--color-background-input);
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
+
+  border-radius: var(--border-radius-medium);
+  border-color: var(--color-border-input);
+  border-style: solid;
+  border-width: var(--border-width-input);
+  color: var(--color-text-input);
+  background-clip: padding-box;
+  transition: 
+      box-shadow var(--timing-short) ease-in,
+      border var(--timing-short) ease-in,
+      background-color var(--timing-short) ease-in;
+
   width: 100%;
   height: inherit;
   max-height: inherit;
@@ -84,23 +92,35 @@ div.icon-selector-wrapper
   overflow: auto;
 }
 
+div.icon-selector-wrapper:hover
+{
+  background-color: var(--color-background-input-focus) !important;
+  border-color: var(--color-border-input-focus) !important;
+}
+
 div.icon-selector-wrapper::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 div.icon-selector-wrapper::-webkit-scrollbar-thumb {
-  height: 17%;
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
+  height: 20%;
+  border-radius: 8px;
 }
 
-div.icon-selector-wrapper::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 1);
+.tw-root--theme-dark div.icon-selector-wrapper::-webkit-scrollbar-thumb
+{
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.tw-root--theme-light div.icon-selector-wrapper::-webkit-scrollbar-thumb
+{
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 div.icon-selector-wrapper::-webkit-scrollbar-track {
-  background-color: transparent;
+  background: inherit;
 }
+
 
 div.icon-list
 {
@@ -121,14 +141,15 @@ img.icon-item
 
 img.icon-item:hover
 {
-  animation: enlarge .2s forwards;
+  border: 1px white solid;
+  box-shadow: 0 0 10px 5px gray;
+  animation: enlarge .1s forwards;
 }
 
 img.selected{
-  width: 45px !important;
-  height: 45px !important;
   border: 1px white solid;
   box-shadow: 0 0 10px 5px gray;
+  animation: enlarge .1s forwards;
 }
 
 /*
@@ -136,11 +157,18 @@ tippy
 */
 
 .tippy-box[data-theme~='twitch'] {
+  margin: 0;
+  padding: 0;
   background-color: var(--color-background-tooltip);
 }
 
 .tippy-box[data-theme~='twitch'][data-placement^='top'] > .tippy-arrow::before {
   border-top-color: var(--color-background-tooltip);
+}
+
+.tippy-arrow
+{
+  bottom: 0.3rem !important;
 }
 
 .tippy-content 
