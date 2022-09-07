@@ -65,3 +65,5 @@ Icons by svgrepo.com
 - `↑`키로 최근에 입력한 메시지 가져오기
 
 - `webpack`사용하기 + `betterttv`에서 유용한 기능 구현하기
+
+- [webextension-polyfill](https://www.npmjs.com/package/webextension-polyfill) 사용해서 크롬, 파이어폭스 한번에 개발하기
