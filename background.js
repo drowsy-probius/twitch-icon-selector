@@ -2,7 +2,7 @@ const APP_VERSION = "1.0.0";
 const DAY_IN_MIN = 24 * 60 * 60;
 const DAY_IN_MISEC = DAY_IN_MIN * 1000;
 let STREAMERS = [];
-const API = "https://twitch-icons.probius.dev"
+const API = "https://api.probius.dev/twitch-icons/cdn/"
 
 const DEFAULT_LOCALSTORAGE = { 
   iconMetadata: {},
@@ -18,6 +18,17 @@ const DEFAULT_LOCALSTORAGE = {
 
 const apiParser = async (res) => {
   const json = await res.json();
+  for(const icon of json.icons)
+  {
+    if(icon.uri.startsWith("./") || icon.uri.startsWith("/"))
+    {
+      icon.uri = API + icon.uri
+    }
+    if(icon.thumbnailUri.startsWith("./") || icon.thumbnailUri.startsWith("/"))
+    {
+      icon.thumbnailUri = API + icon.thumbnailUri
+    }
+  }
   return json;
 }
 
