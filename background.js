@@ -18,6 +18,11 @@ const DEFAULT_LOCALSTORAGE = {
 
 const apiParser = async (res) => {
   const json = await res.json();
+  if(json.icons === undefined)
+  {
+    return Promise.reject(new Error(json.message || `Server response error: ${json}`));
+  }
+
   for(const icon of json.icons)
   {
     if(icon.uri.startsWith("./") || icon.uri.startsWith("/"))
@@ -67,7 +72,7 @@ const getStreamerList = async () => {
     return STREAMERS;
   })
   .catch(async e => {
-    throw e;
+    return Promise.reject(new Error(JSON.stringify(e)));
   })
 }
 
@@ -110,21 +115,29 @@ const cronjob = async () => {
 
     for(const streamer of streamers)
     {
-      let hasStatsData = (streamer in iconStats);
-      const timestamp = iconMetadata[streamer] ? iconMetadata[streamer].timestamp : 0;
-
-      if(!hasStatsData)
+      try 
       {
-        newLocalData.iconStats[streamer] = {};
-      }
+        let hasStatsData = (streamer in iconStats);
+        const timestamp = iconMetadata[streamer] ? iconMetadata[streamer].timestamp : 0;
 
-      const newMetadata = await getLatestData(streamer, timestamp);
-      if(newMetadata.status === false)
-      {
-        console.log(streamer, newMetadata.message);
-        continue;
+        if(!hasStatsData)
+        {
+          newLocalData.iconStats[streamer] = {};
+        }
+
+        console.log(streamer, timestamp);
+        const newMetadata = await getLatestData(streamer, timestamp);
+        if(newMetadata.status === false)
+        {
+          console.log(streamer, newMetadata.message);
+          continue;
+        }
+        newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
       }
-      newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
+      catch(err)
+      {
+        console.trace(streamer, err);
+      }
     }
 
     chrome.storage.local.set(newLocalData, () => {
