@@ -152,6 +152,12 @@ img.selected{
   animation: enlarge .1s forwards;
 }
 
+img.icon-selector-icon 
+{
+  background-image: url("https://api.probius.dev/twitch-icons/cdn/icon?size=32");
+  background-size: contain;
+}
+
 /*
 tippy
 */
