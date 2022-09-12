@@ -562,7 +562,7 @@ const iconAreaExists = async () => {
     toggleSelector(open);
   }
   
-  icon.src = `https://twitch-icons.probius.dev/icon?${32}`;
+  icon.classList.add("icon-selector-icon");
   iconSpace.replaceWith(icon);
   
   iconArea.insertBefore(openSelectorButton, iconArea.lastChild);
