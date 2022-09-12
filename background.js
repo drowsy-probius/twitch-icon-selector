@@ -73,7 +73,8 @@ const getStreamerList = async () => {
 
 const getLatestData = async (streamer_id, timestamp=0) => {
   return fetch(
-    `${API}/list/${streamer_id}?ts=${timestamp}`,
+    // 최소 1시간 로컬 캐시.
+    `${API}/list/${streamer_id}?ts=${Math.floor(timestamp / (1000 * 60 * 60))}`,
     {
       method: "get",
       headers: {"Content-Type": "application/json"}
