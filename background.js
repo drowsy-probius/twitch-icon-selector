@@ -86,7 +86,7 @@ const getLatestData = async (streamer_id, timestamp=0) => {
     }
   )
   .then(async res => {
-    return await apiParser(res);
+    return apiParser(res);
   })
   .catch(async e => {
     throw e;
@@ -170,7 +170,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   {
     cronjob()
     .then(() => {
-      return sendResponse({result: true});
+      sendResponse({result: true});
+      chrome.tabs.reload();
     })
     .catch(err => {
       console.error(err);
