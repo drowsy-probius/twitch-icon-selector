@@ -56,7 +56,7 @@ const makeCallback = (execute, callback) => {
 
 const getStreamerList = async () => {
   return fetch(
-    `${API}/list?ts=${Date.now()}`,
+    `${API}/list`,
     {
       method: "get",
       headers: {"Content-Type": "application/json"}
@@ -86,7 +86,7 @@ const getLatestData = async (streamer_id, timestamp=0) => {
     }
   )
   .then(async res => {
-    return await apiParser(res);
+    return apiParser(res);
   })
   .catch(async e => {
     throw e;
@@ -170,7 +170,8 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   {
     cronjob()
     .then(() => {
-      return sendResponse({result: true});
+      sendResponse({result: true});
+      browser.tabs.reload();
     })
     .catch(err => {
       console.error(err);
