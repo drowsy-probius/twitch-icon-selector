@@ -4,10 +4,10 @@ const DAY_IN_MISEC = DAY_IN_MIN * 1000;
 let STREAMERS = [];
 const API = "https://api.probius.dev/twitch-icons/cdn/"
 
-const DEFAULT_LOCALSTORAGE = { 
-  iconMetadata: {},
-  iconStats: {},
-  iconRenderOptions: {
+const DEFAULT_STORAGE = { 
+  iconMetadata: {}, // to local storage
+  iconStats: {}, // to sync storage
+  iconRenderOptions: { // to sync storage
     size: 0,
     disableTags: 0,
   }
@@ -39,6 +39,51 @@ const apiParser = async (res) => {
 
 ////////////////////////////////////////////////////////////
 // 내부
+
+const setDefaultDataIfNotExists = async () => {
+  let browserLocalData = await browser.storage.local.get();
+  if(browserLocalData === undefined)
+  {
+    browserLocalData = {
+      iconMetadata: {...DEFAULT_STORAGE.iconMetadata}
+    }
+  }
+  if(browserLocalData.iconMetadata === undefined)
+  {
+    browserLocalData.iconMetadata = {...DEFAULT_STORAGE.iconMetadata};
+  }
+  await browser.storage.local.set(browserLocalData);
+  console.log(`Hello, Welcome! data installed to your local storage: `, browserLocalData);
+
+
+  let browserSyncData = await browser.storage.sync.get();
+  if(browserSyncData === undefined)
+  {
+    browserSyncData = {
+      iconStats: {...DEFAULT_STORAGE.iconStats},
+      iconRenderOptions: {...DEFAULT_STORAGE.iconRenderOptions},
+    }
+  }
+  if(browserSyncData.iconStats === undefined)
+  {
+    browserSyncData.iconStats = {...DEFAULT_STORAGE.iconStats};
+  }
+  if(browserSyncData.iconRenderOptions === undefined)
+  {
+    browserSyncData.iconRenderOptions = {...DEFAULT_STORAGE.iconRenderOptions};
+  }
+  if(browserSyncData.iconRenderOptions.size === undefined)
+  {
+    browserSyncData.iconRenderOptions.size = DEFAULT_STORAGE.iconRenderOptions.size;
+  }
+  if(browserSyncData.iconRenderOptions.disableTags === undefined)
+  {
+    browserSyncData.iconRenderOptions.disableTags = DEFAULT_STORAGE.iconRenderOptions.disableTags;
+  }
+
+  await browser.storage.sync.set(browserSyncData);
+  console.log(`Hello, Welcome! data installed to your sync storage: `, browserSyncData);
+}
 
 
 
@@ -93,7 +138,7 @@ const getLatestData = async (streamer_id, timestamp=0) => {
   })
 }
 
-const formLocalStorageData = (data) => {
+const makeDataFormatFromMetadata  = (data) => {
   return {
     ...data
   }
@@ -106,23 +151,27 @@ const cronjob = async () => {
 
   const streamers = await getStreamerList();
 
-  browser.storage.local.get(async result => {
-    const iconMetadata = result.iconMetadata;
-    const iconStats = result.iconStats;
-    const newLocalData = {
-      ...result
-    }
+  browser.storage.sync.get(async result => {
+    const syncData = {...result};
+    const localData = await browser.storage.local.get();
+
+    const iconMetadata = localData.iconMetadata;
+    const iconStats = syncData.iconStats;
+    console.log(syncData, iconStats);
+
+    const newLocalData = { ...localData };
+    const newSyncData = { ...syncData };
 
     for(const streamer of streamers)
     {
       try 
       {
         let hasStatsData = (streamer in iconStats);
-        const timestamp = iconMetadata[streamer] ? iconMetadata[streamer].timestamp : 0;
+        const timestamp = iconMetadata[streamer] && iconMetadata[streamer].timestamp ? iconMetadata[streamer].timestamp : 0;
 
         if(!hasStatsData)
         {
-          newLocalData.iconStats[streamer] = {};
+          newSyncData.iconStats[streamer] = {};
         }
 
         console.log(streamer, timestamp);
@@ -132,7 +181,7 @@ const cronjob = async () => {
           console.log(streamer, newMetadata.message);
           continue;
         }
-        newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
+        newLocalData.iconMetadata[streamer] = makeDataFormatFromMetadata (newMetadata);
       }
       catch(err)
       {
@@ -140,25 +189,17 @@ const cronjob = async () => {
       }
     }
 
-    browser.storage.local.set(newLocalData, () => {
-      console.log(`Refresh done!`, newLocalData);
+    browser.storage.sync.set(newSyncData, () => {
+      console.log(`Refresh done!: sync data`, newSyncData);
     });
+    browser.storage.local.set(newLocalData, () => {
+      console.log(`Refresh done!: local data`, newLocalData);
+    });
+
   });
   return;
 }
 
-
-
-browser.runtime.onInstalled.addListener(() => {
-  browser.storage.local.set(DEFAULT_LOCALSTORAGE);
-  console.log(`Hello, Welcome! data installed to your localstorage: `, DEFAULT_LOCALSTORAGE);
-  cronjob();
-});
-
-browser.runtime.onStartup.addListener(() => {
-  cronjob();
-  console.log(`Hello, Welcome Again!`);
-});
 
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('runtime.onMessage -- ' + 
@@ -177,4 +218,16 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.error(err);
     })
   }
+});
+
+browser.runtime.onInstalled.addListener(() => {
+  setDefaultDataIfNotExists()
+  .then(() => {
+    cronjob();
+  })
+});
+
+browser.runtime.onStartup.addListener(() => {
+  cronjob();
+  console.log(`Hello, Welcome Again!`);
 });

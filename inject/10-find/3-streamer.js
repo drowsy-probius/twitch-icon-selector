@@ -4,7 +4,7 @@
  * live, vod, popout에 따라서 현재 시청중인 스트리머 아이디를 설정한다.
  * 
  * 그리고 로컬 저장소에서 불러온 값을 이용해서 
- * icons, iconStats 변수를 설정한다. 
+ * streamerIcons, streamerIconStats 변수를 설정한다. 
  */
 const find_3_streamer = async () => {
   if(fail)
@@ -62,12 +62,12 @@ const find_3_streamer = async () => {
     }
     logger.debug(`[find_3_streamer] ${watchingStreamer}`);
   
-    icons = chromeLocalData.iconMetadata[watchingStreamer].icons;
-    iconStats = chromeLocalData.iconStats[watchingStreamer];
+    streamerIcons = iconMetadata[watchingStreamer].icons;
+    streamerIconStats = iconStats[watchingStreamer];
 
-    logger.info(`[find_3_streamer] loaded total ${icons.length} icons and statistics`, iconStats);
+    logger.info(`[find_3_streamer] loaded total ${streamerIcons.length} icons and statistics`, streamerIconStats);
 
-    return [icons, iconStats];
+    return [streamerIcons, streamerIconStats];
   }
   catch(err)
   {

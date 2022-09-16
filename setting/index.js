@@ -6,35 +6,35 @@ const waitForLocalData = () => {
     }, timeout);
 
     const intv = setInterval(async () => {
-      const localData = await browser.storage.local.get();
-      if(localData.length !== 0)
+      const browserSyncData = await browser.storage.sync.get();
+      if(browserSyncData.length !== 0)
       {
         clearInterval(intv);
-        resolve(localData);
+        resolve(browserSyncData);
       }
     }, 100);
   })
 }
 
 const init = async () => { 
-  const localData = await waitForLocalData();
-  console.log(localData);
-  const renderOptions = localData.iconRenderOptions;
+  const browserSyncData = await browser.storage.sync.get();
+  console.log(browserSyncData);
+  const renderOptions = browserSyncData.iconRenderOptions;
 
   document.getElementById("render-size").value = renderOptions.size;
   document.getElementById("render-size").onchange = async (e) => {
-    const localData = await browser.storage.local.get();
-    console.log(localData);
-    localData.iconRenderOptions.size = Number(e.target.value);
-    await browser.storage.local.set(localData);
+    const browserSyncData = await browser.storage.sync.get();
+    console.log(browserSyncData);
+    browserSyncData.iconRenderOptions.size = Number(e.target.value);
+    await browser.storage.sync.set(browserSyncData);
   }
 
   document.getElementById("render-disableTags").value = renderOptions.disableTags;
   document.getElementById("render-disableTags").onchange = async (e) => {
-    const localData = await browser.storage.local.get();
-    console.log(localData);
-    localData.iconRenderOptions.disableTags = Number(e.target.value);
-    await browser.storage.local.set(localData);
+    const browserSyncData = await browser.storage.sync.get();
+    console.log(browserSyncData);
+    browserSyncData.iconRenderOptions.disableTags = Number(e.target.value);
+    await browser.storage.sync.set(browserSyncData);
   }
   
   document.getElementById("open-page").onclick = (e) => {

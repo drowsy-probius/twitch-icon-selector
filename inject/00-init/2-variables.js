@@ -10,27 +10,14 @@ let isLive = false;
 let isOffline = false;
 let watchingStreamer = "";
 
-let chromeLocalData = {};
-let icons = [];
-let streamers = [];
+let browserLocalData = {};
+let browserSyncData = {};
+let iconMetadata = {};
 let iconStats = {};
-let iconRenderOptions = {
-  /**
-   * 0: default (100, 100)
-   * 1: small (70, 70)
-   * 2: emoji (28, 28) and inline (no render limit)
-   */
-  size: 0,
-
-  /**
-   * []태그를 지원하는지에 대한 옵션
-   * 
-   * 0: off
-   * 1: on
-   */
-  disableTags: 0,
-}
-
+let iconRenderOptions = {};
+let streamerIcons = [];
+let streamerIconStats = {};
+let streamers = [];
 
 const preRenderedIcons = {
   image: {},

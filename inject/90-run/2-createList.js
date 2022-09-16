@@ -4,7 +4,7 @@
  * 
  */
  const buildIconElements = async () => {
-  await Promise.all(icons.map(icon => {
+  await Promise.all(streamerIcons.map(icon => {
     return new Promise((resolve, reject) => {
       const iconImage = document.createElement("img");
       iconImage.classList.add("icon-common");
