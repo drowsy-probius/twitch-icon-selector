@@ -1,2 +1,4 @@
 *.zip
 *.psd
+
+!releases/*.zip
