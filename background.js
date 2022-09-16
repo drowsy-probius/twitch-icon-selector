@@ -4,10 +4,10 @@ const DAY_IN_MISEC = DAY_IN_MIN * 1000;
 let STREAMERS = [];
 const API = "https://api.probius.dev/twitch-icons/cdn/"
 
-const DEFAULT_LOCALSTORAGE = { 
-  iconMetadata: {},
-  iconStats: {},
-  iconRenderOptions: {
+const DEFAULT_STORAGE = { 
+  iconMetadata: {}, // to local storage
+  iconStats: {}, // to sync storage
+  iconRenderOptions: { // to sync storage
     size: 0,
     disableTags: 0,
   }
@@ -40,6 +40,39 @@ const apiParser = async (res) => {
 ////////////////////////////////////////////////////////////
 // 내부
 
+const setDefaultDataIfNotExists = () => {
+  chrome.storage.local.get(result => {
+    if(result.iconMetadata === undefined)
+    {
+      result.iconMetadata = {...DEFAULT_STORAGE.iconMetadata};
+    }
+    chrome.storage.local.set(result, () => {
+      console.log(`Hello, Welcome! data installed to your local storage: `, result);
+    });
+  })
+  chrome.storage.sync.get(result => {
+    if(result.iconStats === undefined)
+    {
+      result.iconStats = {...DEFAULT_STORAGE.iconStats};
+    }
+    if(result.iconRenderOptions === undefined)
+    {
+      result.iconRenderOptions = {...DEFAULT_STORAGE.iconRenderOptions};
+    }
+    if(result.iconRenderOptions.size === undefined)
+    {
+      result.iconRenderOptions.size = DEFAULT_STORAGE.iconRenderOptions.size;
+    }
+    if(result.iconRenderOptions.disableTags === undefined)
+    {
+      result.iconRenderOptions.disableTags = DEFAULT_STORAGE.iconRenderOptions.disableTags;
+    }
+
+    chrome.storage.sync.set(result, () => {
+      console.log(`Hello, Welcome! data installed to your sync storage: `, result);
+    });
+  });
+}
 
 
 ////////////////////////////////////////////////////////////
@@ -93,7 +126,7 @@ const getLatestData = async (streamer_id, timestamp=0) => {
   })
 }
 
-const formLocalStorageData = (data) => {
+const makeDataFormatFromMetadata = (data) => {
   return {
     ...data
   }
@@ -106,23 +139,26 @@ const cronjob = async () => {
 
   const streamers = await getStreamerList();
 
-  chrome.storage.local.get(async result => {
-    const iconMetadata = result.iconMetadata;
-    const iconStats = result.iconStats;
-    const newLocalData = {
-      ...result
-    }
+  chrome.storage.sync.get(async result => {
+    const syncData = {...result};
+    const localData = await chrome.storage.local.get();
+
+    const iconMetadata = localData.iconMetadata;
+    const iconStats = syncData.iconStats;
+
+    const newLocalData = { ...localData };
+    const newSyncData = { ...syncData };
 
     for(const streamer of streamers)
     {
       try 
       {
         let hasStatsData = (streamer in iconStats);
-        const timestamp = iconMetadata[streamer] ? iconMetadata[streamer].timestamp : 0;
+        const timestamp = iconMetadata[streamer] && iconMetadata[streamer].timestamp ? iconMetadata[streamer].timestamp : 0;
 
         if(!hasStatsData)
         {
-          newLocalData.iconStats[streamer] = {};
+          newSyncData.iconStats[streamer] = {};
         }
 
         console.log(streamer, timestamp);
@@ -132,7 +168,7 @@ const cronjob = async () => {
           console.log(streamer, newMetadata.message);
           continue;
         }
-        newLocalData.iconMetadata[streamer] = formLocalStorageData(newMetadata);
+        newLocalData.iconMetadata[streamer] = makeDataFormatFromMetadata(newMetadata);
       }
       catch(err)
       {
@@ -140,25 +176,17 @@ const cronjob = async () => {
       }
     }
 
-    chrome.storage.local.set(newLocalData, () => {
-      console.log(`Refresh done!`, newLocalData);
+    chrome.storage.sync.set(newSyncData, () => {
+      console.log(`Refresh done!: sync data`, newSyncData);
     });
+    chrome.storage.local.set(newLocalData, () => {
+      console.log(`Refresh done!: local data`, newLocalData);
+    });
+
   });
   return;
 }
 
-
-
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set(DEFAULT_LOCALSTORAGE);
-  console.log(`Hello, Welcome! data installed to your localstorage: `, DEFAULT_LOCALSTORAGE);
-  cronjob();
-});
-
-chrome.runtime.onStartup.addListener(() => {
-  cronjob();
-  console.log(`Hello, Welcome Again!`);
-});
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('runtime.onMessage -- ' + 
@@ -177,4 +205,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.error(err);
     })
   }
+});
+
+
+chrome.runtime.onInstalled.addListener(() => {
+  setDefaultDataIfNotExists();
+  cronjob();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  cronjob();
+  console.log(`Hello, Welcome Again!`);
 });

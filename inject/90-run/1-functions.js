@@ -32,7 +32,7 @@ const chatScrollByOne = () => {
 /**
  * 사용자가 입력한 채팅을 읽어서
  * 선택한 아이콘의 통계를 만들어주고
- * chrome.storage.local에 저장함.
+ * chrome.storage.sync에 저장함.
  * @param {string} input
  * @returns void
  */
@@ -43,17 +43,11 @@ const makeStatsFromInput = async (input) => {
   const icons = iconNames.map(t => iconMatch(t.slice(1))).filter(t => t !== false);
   if(icons.length === 0) return;
 
-  if(!chromeLocalData || chromeLocalData.length === 0)
-  {
-    chromeLocalData = await chrome.storage.local.get();
-  }
-  iconStats = chromeLocalData.iconStats[watchingStreamer] || {};
-
   Promise.all(icons.map(icon => {
     return new Promise((resolve) => {
       resolve({
         "key": icon.nameHash,
-        "value": iconStats[icon.nameHash] + 1 || 1
+        "value": streamerIconStats[icon.nameHash] + 1 || 1
       });
     })
   }))
@@ -62,18 +56,19 @@ const makeStatsFromInput = async (input) => {
     for(const info of data) merged[info.key] = info.value;
 
     const newiconStats = {
-      ...iconStats,
+      ...streamerIconStats,
       ...merged,
     }
 
     const updateData = {
-      ...chromeLocalData,
+      ...browserSyncData,
     }
     updateData.iconStats[watchingStreamer] = newiconStats;
 
-    await chrome.storage.local.set(updateData);
-    chromeLocalData = await chrome.storage.local.get();
-    logger.debug(`update localData`, chromeLocalData);
+    await chrome.storage.sync.set(updateData);
+    browserSyncData = await chrome.storage.sync.get();
+    streamerIconStats = browserSyncData.iconStats[watchingStreamer];
+    logger.debug(`update browser data`, browserSyncData);
   })
   .catch(err => {
     logger.error(err);

@@ -10,13 +10,15 @@ const resetVariables = () => {
   isLive = !(isVod && isPopout && isClip);
   watchingStreamer = undefined;
 
-  chromeLocalData = {};
-  icons = [];
+  browserLocalData = {};
+  browserSyncData = {};
+  iconMetadata = {};
+  iconStats = {};
+  iconRenderOptions = {};
+  streamerIcons = [];
+  streamerIconStats = {};
   streamers = [];
-  dcconStats = {};
-  iconRenderOptions = {
-    type: 0,
-  };
+
   preRenderedIcons.image = {};
   preRenderedIcons.thumbnail = {};
 
@@ -100,7 +102,7 @@ const iconFilter = (keyword) => {
   const filteredIcons = [];
   const filteredIconsWithStats = [];
   keyword = keyword.toLowerCase(); 
-  for(const icon of icons)
+  for(const icon of streamerIcons)
   {
     let match = false;
     // 키워드 검색
@@ -145,7 +147,7 @@ const iconFilter = (keyword) => {
  */
 const iconMatch = (keyword) => {
   keyword = keyword.toLowerCase();
-  for(const icon of icons)
+  for(const icon of streamerIcons)
   {
     const keywords = icon.keywords.map(k => k.toLowerCase());
     if(keywords.includes(keyword))
