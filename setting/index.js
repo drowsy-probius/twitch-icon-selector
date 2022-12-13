@@ -1,4 +1,4 @@
-const waitForLocalData = () => {
+const waitForSyncData = () => {
   return new Promise((resolve, reject) => {
     const timeout = 2000;
     setTimeout(() => {
@@ -17,14 +17,13 @@ const waitForLocalData = () => {
 }
 
 const init = async () => { 
-  const browserSyncData = await browser.storage.sync.get();
+  const browserSyncData = await waitForSyncData();
   console.log(browserSyncData);
   const renderOptions = browserSyncData.iconRenderOptions;
 
   document.getElementById("render-size").value = renderOptions.size;
   document.getElementById("render-size").onchange = async (e) => {
     const browserSyncData = await browser.storage.sync.get();
-    console.log(browserSyncData);
     browserSyncData.iconRenderOptions.size = Number(e.target.value);
     await browser.storage.sync.set(browserSyncData);
   }
@@ -32,7 +31,6 @@ const init = async () => {
   document.getElementById("render-disableTags").value = renderOptions.disableTags;
   document.getElementById("render-disableTags").onchange = async (e) => {
     const browserSyncData = await browser.storage.sync.get();
-    console.log(browserSyncData);
     browserSyncData.iconRenderOptions.disableTags = Number(e.target.value);
     await browser.storage.sync.set(browserSyncData);
   }

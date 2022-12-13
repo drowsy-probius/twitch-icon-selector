@@ -45,9 +45,9 @@ const find_3_streamer = async () => {
     }
 
     /**
-     * TEST CODE
+     * TEST STREAMER
      */
-    if(watchingStreamer === "k123s456h") watchingStreamer = "funzinnu";
+    if(watchingStreamer === "drowsyprobius") watchingStreamer = "funzinnu";
     
     if(!streamers.includes(watchingStreamer))
     {

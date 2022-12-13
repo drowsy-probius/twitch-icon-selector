@@ -10,7 +10,9 @@ const hiddenChatSelector = `[data-test-selector="stream-chat-hidden-state"]`;
 const chatAreaSelector = `.video-chat__message-list-wrapper ul, .chat-scrollable-area__message-container`;
 const chatScrollSelector = `div[data-a-target='chat-scroller'] .simplebar-scroll-content`;
 
-const chatBodySelector = `.video-chat__message > span:nth-child(2), [data-test-selector="chat-line-message-body"]`;
+// 221211 트위치 프론트 업데이트로 선택자 변경
+// 221213 트위치 vod 재생 불가능하므로 실시간 채팅만 적용
+const chatLineParentSelector = `.chat-line__no-background`;
 const chatTextSelector = `.text-fragment`;
 
 /**
