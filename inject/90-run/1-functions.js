@@ -61,16 +61,17 @@ const makeStatsFromInput = async (input) => {
     }
 
     const updateData = {
-      ...browserSyncData,
+      ...browserLocalData,
     }
     updateData.iconStats[watchingStreamer] = newiconStats;
 
-    await chrome.storage.sync.set(updateData);
-    browserSyncData = await chrome.storage.sync.get();
-    streamerIconStats = browserSyncData.iconStats[watchingStreamer];
-    logger.debug(`update browser data`, browserSyncData);
+    await chrome.storage.local.set(updateData);
+    browserLocalData = await chrome.storage.local.get();
+    streamerIconStats = browserLocalData.iconStats[watchingStreamer];
+    logger.debug(`update browser local data`, browserLocalData);
   })
   .catch(err => {
+    console.trace(err);
     logger.error(err);
   })
 }
@@ -155,7 +156,7 @@ const iconClickHandler = async (e) => {
       isPrefix = true;
     }
   }
-  logger.debug(currentInput, currentInput.length, "=>", keyword, "prefix?", isPrefix);
+  // logger.debug(currentInput, currentInput.length, "=>", keyword, "prefix?", isPrefix);
   if(isPrefix)
   {
     /**
@@ -391,7 +392,7 @@ const chatInputHandlerForSpecialKeys = async (e) => {
       }
 
       const doPaste = (iconSelectorCursorArrowCount === 0 || text.length === 0);
-      logger.debug(currentInput, keyword);
+      // logger.debug(currentInput, keyword);
       if(doPaste && isPrefix)
       {
         const slicedKeyword = keyword.slice(currentInput.length);
@@ -444,8 +445,9 @@ const chatObserverHandler = (mutationList, observer) => {
     const children = record.addedNodes;
     for(const child of children)
     {
-      child.querySelectorAll(chatBodySelector).forEach(chatDiv => {
-        replaceChatData(chatDiv);
+      child.querySelectorAll(chatLineParentSelector).forEach(lineParent => {
+        chatBody = lineParent.lastChild;
+        replaceChatData(chatBody);
       });
     }
   }
@@ -586,8 +588,9 @@ const inputSendButtonExists = () => {
  * chatArea가 존재할 때 호출됨
  */
 const chatAreaExists = () => {
-  chatArea.querySelectorAll(chatBodySelector).forEach(chatDiv => {
-    replaceChatData(chatDiv);
+  chatArea.querySelectorAll(chatLineParentSelector).forEach(lineParent => {
+    chatBody = lineParent.lastChild;
+    replaceChatData(chatBody);
   });
 }
 

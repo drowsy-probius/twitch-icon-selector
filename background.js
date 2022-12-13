@@ -6,15 +6,15 @@ const API = "https://api.probius.dev/twitch-icons/cdn/"
 
 const DEFAULT_STORAGE = { 
   iconMetadata: {}, // to local storage
-  iconStats: {}, // to sync storage
+  iconStats: {}, // to local storage
   iconRenderOptions: { // to sync storage
-    size: 0,
-    disableTags: 0,
+    size: 1, // default small
+    disableTags: 0, // default on
   }
 }
 
 ////////////////////////////////////////////////////////////
-// 파서
+// parser
 
 const apiParser = async (res) => {
   const json = await res.json();
@@ -46,15 +46,15 @@ const setDefaultDataIfNotExists = () => {
     {
       result.iconMetadata = {...DEFAULT_STORAGE.iconMetadata};
     }
+    if(result.iconStats === undefined)
+    {
+      result.iconStats = {...DEFAULT_STORAGE.iconStats};
+    }
     chrome.storage.local.set(result, () => {
       console.log(`Hello, Welcome! data installed to your local storage: `, result);
     });
   })
   chrome.storage.sync.get(result => {
-    if(result.iconStats === undefined)
-    {
-      result.iconStats = {...DEFAULT_STORAGE.iconStats};
-    }
     if(result.iconRenderOptions === undefined)
     {
       result.iconRenderOptions = {...DEFAULT_STORAGE.iconRenderOptions};
@@ -144,7 +144,7 @@ const cronjob = async () => {
     const localData = await chrome.storage.local.get();
 
     const iconMetadata = localData.iconMetadata;
-    const iconStats = syncData.iconStats;
+    const iconStats = localData.iconStats;
 
     const newLocalData = { ...localData };
     const newSyncData = { ...syncData };
@@ -158,7 +158,7 @@ const cronjob = async () => {
 
         if(!hasStatsData)
         {
-          newSyncData.iconStats[streamer] = {};
+          newLocalData.iconStats[streamer] = {};
         }
 
         console.log(streamer, timestamp);

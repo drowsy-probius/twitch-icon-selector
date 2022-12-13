@@ -13,17 +13,16 @@ const init_4_storage = async () => {
 
   try 
   {
-    logger.debug("[init_4_storage]");
-
     browserLocalData = await chrome.storage.local.get();
     browserSyncData = await chrome.storage.sync.get();
 
     iconMetadata = browserLocalData.iconMetadata;
-    iconStats = browserSyncData.iconStats;
+    iconStats = browserLocalData.iconStats;
     iconRenderOptions = browserSyncData.iconRenderOptions;
 
     streamers = Object.keys(iconStats);
-    logger.debug("[init_4_storage]", streamers, iconRenderOptions);
+    logger.debug("[init_4_storage] localStorage", iconMetadata, iconStats);
+    logger.debug("[init_4_storage] syncStorage", iconRenderOptions);
     return streamers;
   }
   catch(err)

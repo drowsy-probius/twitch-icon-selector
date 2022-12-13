@@ -10,7 +10,14 @@ let isLive = false;
 let isOffline = false;
 let watchingStreamer = "";
 
+/**
+ * 사용 통계, 
+ * 아이콘 정보,
+ */
 let browserLocalData = {};
+/**
+ * 사용자 설정
+ */
 let browserSyncData = {};
 let iconMetadata = {};
 let iconStats = {};
