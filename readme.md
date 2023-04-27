@@ -1,3 +1,13 @@
+# Deprecated
+
+이 레포는 업데이트되지 않습니다.
+
+이후 유지보수 및 개발은 아래 레포에서 진행됩니다.
+
+[iconttv-extension](https://github.com/iconttv/iconttv-extension)
+
+---
+
 # Features
 
 - 트위치 생방송, 트위치 다시보기, popout 채팅창, 클립 페이지에서 작동
